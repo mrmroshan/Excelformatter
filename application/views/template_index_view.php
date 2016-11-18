@@ -1,7 +1,12 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 include("header.php")
 ?>
-
+<style type="text/css">
+.required{
+    border: 1px solid red;
+    background: red;
+    color: black}
+</style>
 <div class="container">
   <div class="span4 offset4">
     
@@ -19,24 +24,19 @@ include("header.php")
         <ul id="sortable1" class="connectedSortable">
           <?php 
             foreach ($all_columns as $k => $v){
-              foreach($v as $k1 => $v1){
-                echo '<li class="ui-state-default">'.$v1.'</li>';
-              }
+              //foreach($v as $k1 => $v1){
+                echo '<li class="ui-state-default">'.$v.'</li>';
+              //}
             }
           ?>
-
-          <li class="ui-state-default">Item 1</li>
-          <li class="ui-state-default">Item 2</li>
-          <li class="ui-state-default">Item 3</li>
-          <li class="ui-state-default">Item 4</li>
-          <li class="ui-state-default">Item 5</li>
+          
         </ul>
 
       </div>
       <div class="col-md-6" >
         <ul id="sortable2" class="connectedSortable">
           <li class="ui-state-highlight">Item 1</li>
-          <li class="ui-state-highlight">Item 2</li>
+          <li class="ui-state-highlight required">Item 2</li>
           <li class="ui-state-highlight">Item 3</li>
           <li class="ui-state-highlight">Item 4</li>
           <li class="ui-state-highlight">Item 5</li>
@@ -51,5 +51,15 @@ include("header.php")
 
 </div><!-- /.container -->
 
+<script type="text/javascript">
+
+    $( document ).ready(function() {  
+   
+      $( "#sortable1, #sortable2" ).sortable({
+        connectWith: ".connectedSortable"
+      }).disableSelection();
+    
+  });
+</script>
  
 <?php include ("footer.php")?>

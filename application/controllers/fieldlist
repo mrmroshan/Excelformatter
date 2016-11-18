@@ -1,0 +1,57 @@
+/*
+Srl.No	
+AIRWAY 
+Bill	
+Cutomer A/c# 	
+Pickup Number	
+jcs no	
+Ref1(50)	
+Ref2(50)	
+Cnee Name(100)	
+Company Name(100)	
+Valid ID	
+Address(250)	
+Cnee Country Name	
+Cnee Country Code	
+Cnee Province Name	
+Cnee Province Code	
+Cnee City Name	
+Cnee City Code	
+Cnee Area	
+Cnee Area Code	
+Cnee Pin Code	
+Email1(100)	
+Email2(100)	
+Service Name	
+Service ID	
+USER_ID	
+Desciption of Goods(100)	
+Description2(100)	
+Pcs	
+Wt	
+Calling	
+ROUNDTRIP	
+Del_Date	
+Del_Time	
+Note1(250)	
+Note2(250)	
+Note3(250)	
+Note4(250)	
+Note5(250)	
+Note6(250)	
+Autodialer/TelMobile(Phone1)	
+(TelHome)Phone2	
+(WhatsApp)Phone3	
+(TelWork)Phone4	
+Phone5	
+Phone6	
+Source Station	
+Destination Station 	
+INSURED	
+SHIPMENT NAME	
+SHIPMENT CODE	
+COD	
+COD Currency	
+Cost of Goods	
+COG Currency
+*/
