@@ -66,11 +66,10 @@ class Templates extends CI_Controller {
 			'Destination Station'=>'Destination Station', 	
 			'INSURED'=>'INSURED',	
 			'SHIPMENT NAME'=>'SHIPMENT NAME',	
-			'SHIPMENT CODE'=>'SHIPMENT CODE',	
-		
+			'SHIPMENT CODE'=>'SHIPMENT CODE'		
 			);
 
-			data['required_columns'] = array(
+			$data['required_columns'] = array(
 			'Cutomer A/c#' => 'Cutomer A/c#',	
 			'Pickup Number' => 'Pickup Number',	
 			'Cnee Name(100)' => 'Cnee Name(100)',	

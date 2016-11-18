@@ -4,7 +4,7 @@ include("header.php")
 <style type="text/css">
 .required{
     border: 1px solid red;
-    background: red;
+    background: #cc5b5b;
     color: black}
 </style>
 <div class="container">
@@ -19,35 +19,50 @@ include("header.php")
   
     <div class="row">
       <div class="col-md-6" >
-          <?php //var_dump($all_columns)?>
 
+         <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">All Columns</h3>
+          </div>
+          <div class="panel-body">
+            
         <ul id="sortable1" class="connectedSortable">
           <?php 
             foreach ($all_columns as $k => $v){
-              //foreach($v as $k1 => $v1){
-                echo '<li class="ui-state-default">'.$v.'</li>';
-              //}
+                echo '<li class="ui-state-default" id="'.$k.'">'.$v.'</li>';
+              
             }
           ?>
           
         </ul>
+      </div>
 
       </div>
-      <div class="col-md-6" >
+    </div><!--/col-md-6-->
+
+     <div class="col-md-6" >
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Template Columns</h3>
+          </div>
+          <div class="panel-body">
+
         <ul id="sortable2" class="connectedSortable">
-          <li class="ui-state-highlight">Item 1</li>
-          <li class="ui-state-highlight required">Item 2</li>
-          <li class="ui-state-highlight">Item 3</li>
-          <li class="ui-state-highlight">Item 4</li>
-          <li class="ui-state-highlight">Item 5</li>
+           <?php 
+            foreach ($required_columns as $k => $v){
+                echo '<li class="ui-state-highlight required" id ="'.$k.'">'.$v.'</li>';              
+            }
+          ?>
+        
         </ul>
       </div>
-    </div>
 
+      </div>
+    </div><!--/col-md-6-->
 
-    </div>
-    </div>
-  </div>
+    </div><!--/row-->
+  </div><!--/panelbody-->
 
 </div><!-- /.container -->
 
@@ -56,7 +71,8 @@ include("header.php")
     $( document ).ready(function() {  
    
       $( "#sortable1, #sortable2" ).sortable({
-        connectWith: ".connectedSortable"
+        connectWith: ".connectedSortable",
+        cancel: ".required"
       }).disableSelection();
     
   });
