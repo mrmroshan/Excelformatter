@@ -80,16 +80,33 @@ include("header.php")
       $( "#btnDL" ).click(function() {
         
         var col_list = [];
+        var col_list_str = "";
         $( "#sortable2 li" ).each(function( index ) {
           //console.log( index + ": " + $( this ).text() );
            col_list.push({
               index: index,
               name: $( this ).text()           
             });
+           col_list_str += $( this ).text() + '---'
           
         });//end each
-         console.log( "col_list[]: " + col_list );
-      });
+        
+        console.log( "col_list[]: " + col_list );
+          var url = '<?php echo site_url('templates/create_template?col_list=')?>'+encodeURIComponent(col_list_str);
+          console.log('url:'+url)
+         window.location = url;
+        /*
+        $.ajax({
+          url: "<?php echo site_url('templates/create_template')?>", 
+          data: { col_list: col_list} ,
+          success: function(result){
+            //console.log("result:"+result);
+            window.location = '<?php echo site_url('templates/create_template')?>';
+          }
+        });
+      */
+
+      });//end of click()
     
 
   });
