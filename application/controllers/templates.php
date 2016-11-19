@@ -90,6 +90,10 @@ class Templates extends CI_Controller {
 
 		$this->load->view('template_index_view', $data);
 	}//end of function
+
+	public function create_template(){
+
+	}//end of function
 	
 }
 ?>

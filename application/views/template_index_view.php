@@ -45,10 +45,12 @@ include("header.php")
         <div class="panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">Template Columns</h3>
+            <br>
+            <input type ="button" class ="btn btn-primary btn-sm" value ="Download Excel Template" id="btnDL">
           </div>
           <div class="panel-body">
 
-        <ul id="sortable2" class="connectedSortable">
+        <ul id="sortable2" class="connectedSortable" >
            <?php 
             foreach ($required_columns as $k => $v){
                 echo '<li class="ui-state-highlight required" id ="'.$k.'">'.$v.'</li>';              
@@ -60,7 +62,7 @@ include("header.php")
 
       </div>
     </div><!--/col-md-6-->
-
+    
     </div><!--/row-->
   </div><!--/panelbody-->
 
@@ -74,8 +76,24 @@ include("header.php")
         connectWith: ".connectedSortable",
         cancel: ".required"
       }).disableSelection();
+
+      $( "#btnDL" ).click(function() {
+        
+        var col_list = [];
+        $( "#sortable2 li" ).each(function( index ) {
+          //console.log( index + ": " + $( this ).text() );
+           col_list.push({
+              index: index,
+              name: $( this ).text()           
+            });
+          
+        });//end each
+         console.log( "col_list[]: " + col_list );
+      });
     
+
   });
+    
 </script>
  
 <?php include ("footer.php")?>
