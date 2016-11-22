@@ -43,6 +43,9 @@ class Home extends CI_Controller {
 
 	}//end of function
 
+	
+	
+	
 	public function extract_excel_file_data($excel_file){
 
 		/**  Identify the type of $inputFileName  **/
