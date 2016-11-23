@@ -22,7 +22,7 @@ include("header.php")
 	        
         <?php echo (!empty($error))?$error:null;?>
 
-        <?php echo form_open_multipart('templates/upload_excel');?>
+        <?php echo form_open_multipart('templates/upload_excel_file');?>
 
         <input type="file" name="userfile" size="20" value ="" />
         

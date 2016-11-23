@@ -12,7 +12,8 @@ class Templates extends CI_Controller {
 
 	private $debug = true;
 	private $selected_col_list = null;
-	private $excel_sheet_data = array();
+	//private $up_excel_sheet_data = array();
+	//private $up_excel_sheet_cols = array();
 		
 	function __construct(){
 
@@ -115,20 +116,19 @@ class Templates extends CI_Controller {
 			
 			$i = 0;
 			
-			$temp_col_list = array();
+			$template_col_list = array();
 			
 			foreach($col_list_array as $col){
 				
-				$temp_col_list[] = $col;
+				$template_col_list[] = $col;
 				
 			}//end foreach
 					
+			$this->set_template_col_list_in_session($template_col_list);
 			
-			$this->session->set_userdata('template_col_list_array',$temp_col_list);
+			if($this->debug)log_message('debug','index():$template_col_list :'. print_r($template_col_list,true));
 			
-			if($this->debug)log_message('debug','Temp session col list :'. print_r($temp_col_list,true));
-			
-			$this->upload_excel();
+			$this->upload_excel_file();
 				
 		}else{
 			
@@ -145,7 +145,7 @@ class Templates extends CI_Controller {
 	 * This function will upload the excel file to the system.
 	 * Then prepares its column listing in an array. 
 	 */
-	public function upload_excel(){
+	public function upload_excel_file(){
 		
 		$file_data = array();
 		
@@ -159,7 +159,7 @@ class Templates extends CI_Controller {
 				
 			$this->extract_excel_file_data($file_data['upload_data']);
 			
-			if($this->debug)log_message('debug','File details :'. print_r($file_data,true));
+			if($this->debug)log_message('debug','upload_excel_file():$file_data:'. print_r($file_data,true));
 			
 			$this->map_fields();
 			
@@ -172,19 +172,27 @@ class Templates extends CI_Controller {
 	}//end of function
 	
 	
-	public function map_fields(){
+	private function map_fields(){
 		
 		$data = array();
 		
-		//echo '<pre>';
-		//var_dump($this->session->userdata('excel_data_array'));
+		$up_file_col_list = $this->get_uploaded_file_col_list();
 		
+		$data['up_file_col_list'] = $up_file_col_list;
+		
+		if($this->debug)log_message('debug','map_fields():$up_file_col_list:'. print_r($up_file_col_list,true));
+				
+		$template_col_list = $this->get_template_col_list_from_session();
+		
+		$data['template_col_list'] = $template_col_list;
+		
+		if($this->debug)log_message('debug','map_fields():$template_col_list:'. print_r($template_col_list,true));
+		
+			
 		$this->load->view('map_fields_view', $data);
 		
 	}//end of function
-	
-	
-	
+		
 	
 	/**
 	 * upload()
@@ -193,7 +201,7 @@ class Templates extends CI_Controller {
 	 * 
 	 * @return array file data
 	 */
-	public function upload(){	
+	private function upload(){	
 	
 		$upload_feedback = $this->upload->do_upload('userfile');
 	
@@ -214,19 +222,57 @@ class Templates extends CI_Controller {
 	
 	
 	/**
+	 * set_template_col_list_in_session()
+	 * 
+	 * This function sets template column listing in a session
+	 * 
+	 * @param array $template_col_list
+	 */
+	private function set_template_col_list_in_session($template_col_list){
+		
+		$this->session->set_userdata('template_col_list_array',$template_col_list);
+		
+		if($this->debug)log_message('debug','set_template_col_list_in_session(): $$template_col_list :'. print_r($template_col_list,true));
+		
+	}//end of function
+	
+	
+	/**
+	 * get_template_col_list_from_session()
+	 * 
+	 * This function gets template column listing from session
+	 * 
+	 * @return array $template_col_list
+	 */
+	private function get_template_col_list_from_session(){
+		
+		$template_col_list = $this->session->userdata('template_col_list_array');
+		
+		if($this->debug)log_message('debug','get_template_col_list(): $template_col_list :'. print_r($template_col_list,true));
+		
+		return $template_col_list;
+		
+	}//end of function
+	
+	
+	/**
 	 * extract_excel_file_data()
 	 * 
 	 * This function extracts all data in the excel file
 	 * 
 	 * @param unknown $excel_file
 	 */
-	public function extract_excel_file_data($excel_file){
+	private function extract_excel_file_data($excel_file){
 	
-		/**  Identify the type of $inputFileName  **/
+		$excel_data_array = array();
+		
+		// Identify the type of $inputFileName 
 		$inputFileType = PHPExcel_IOFactory::identify($excel_file['full_path']);
-		/**  Create a new Reader of the type that has been identified  **/
+		
+		// Create a new Reader of the type that has been identified 
 		$objReader = PHPExcel_IOFactory::createReader($inputFileType);
-		/**  Load $inputFileName to a PHPExcel Object  **/
+		
+		// Load $inputFileName to a PHPExcel Object 
 		$objPHPExcel = $objReader->load($excel_file['full_path']);
 	
 		$objReader->setReadDataOnly(TRUE);
@@ -235,7 +281,9 @@ class Templates extends CI_Controller {
 	
 		// Get the highest row and column numbers referenced in the worksheet
 		$highestRow = $objWorksheet->getHighestRow(); // e.g. 10
+		
 		$highestColumn = $objWorksheet->getHighestColumn(); // e.g 'F'
+		
 		$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn); // e.g. 5
 	
 		for ($row = 1; $row <= $highestRow; ++$row) {
@@ -243,23 +291,97 @@ class Templates extends CI_Controller {
 			for ($col = 0; $col <= $highestColumnIndex; ++$col) {
 				
 				$cell_value =  $objWorksheet->getCellByColumnAndRow($col, $row)->getValue() ;
-				
-				//if(!empty($cell_value)){
-					
-					$this->excel_sheet_data[$row][$col] = $cell_value;					
-					
-				//}
+							
+				$excel_data_array[$row][$col] = $cell_value;	
+			
 			}//end for each
+			
 		}//end foreach
 		
-		$excel_data_array = $this->excel_sheet_data;
-			
-		$this->session->set_userdata('excel_data_array',$excel_data_array);
+		$this->set_excel_file_data_in_session($excel_data_array);
 		
-		if($this->debug)log_message('debug','Excel Data :'. print_r($this->excel_sheet_data,true));
+		if($this->debug)log_message('debug','extract_excel_file_data():$excel_data_array :'. print_r($excel_data_array,true));
+		
+		$this->set_uploaded_file_col_list($excel_data_array);
+		
 	}//end of function
 	
 	
+	
+	/**
+	 * set_excel_file_data_in_session()
+	 * 
+	 * This function stores given uploaded excel fild data in session
+	 *  
+	 * @param array $excel_data_array
+	 */
+	private function set_excel_file_data_in_session($excel_data_array){
+		
+		if($this->debug)log_message('debug','set_excel_file_data_in_session(): 	$excel_data_array :'. print_r($excel_data_array,true));
+		
+		$this->session->set_userdata('excel_data_array',$excel_data_array);
+				
+	}//end of function
+	
+	
+	/**
+	 * get_excel_file_data_from_session()
+	 * 
+	 * This function gets uploaded excel file data from alrady stored session
+	 * 
+	 * @return array $excel_data
+	 */
+	private function get_excel_file_data_from_session(){
+		
+		$excel_data = $this->session->userdata('excel_data_array');
+		
+		if($this->debug)log_message('debug','get_excel_file_data_from_session(): $excel_data :'. print_r($excel_data,true));
+		
+		return $excel_data;
+			
+	}//end of function
+	
+	/**
+	 * set_uploaded_file_col_list()
+	 * 
+	 * This function gets column listing of uploaded excel file from
+	 * stored shession
+	 * 
+	 * return array collist
+	 */
+	private function set_uploaded_file_col_list($excel_data_array){
+		
+		$collist = array();
+		
+		foreach($excel_data_array[1] as $cols){
+			
+			$collist[] = $cols;
+			
+		}//endforeach
+		
+		if($this->debug)log_message('debug','set_uploaded_file_col_list():$collist :'. print_r($collist,true));
+		
+		$this->session->set_userdata('up_file_col_list_array',$collist);		
+		
+	}//end of function
+	
+	
+	/**
+	 * get_uploaded_file_col_list()
+	 * 
+	 * This function returns uploaded file col listing from the session
+	 * 
+	 * @return array collist
+	 */
+	private function get_uploaded_file_col_list(){
+		
+		$collist = $this->session->userdata('up_file_col_list_array');
+		
+		if($this->debug)log_message('debug','get_uploaded_file_col_list():$collist :'. print_r($collist,true));
+				
+		return $collist;
+		
+	}//end of function
 	
 	
 	public function create_template(){
