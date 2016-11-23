@@ -22,6 +22,9 @@
     font-size: 1.2em;
     width: 98%;
   }
+  #sortable2 {
+    border: 1px solid #d54545;
+    }
   .ui-draggable, .ui-droppable {background-position: top;}
    
  

@@ -15,8 +15,7 @@ include("header.php")
       <h2 class="panel-title">Step 1</h2>
     </div>
     <div class="panel-body">
-      <p>Please select columns from 'All Columns' listing then drag and drop to 'Template Columns' to
-      create the template  </p>
+      <h3>Please select columns from 'All Columns' listing then drag and drop into red colour box to create the template  </h3>
   
     <div class="row">
       <div class="col-md-6" >
@@ -26,16 +25,15 @@ include("header.php")
             <h3 class="panel-title">All Columns</h3>
           </div>
           <div class="panel-body">
-            
-        <ul id="sortable1" class="connectedSortable">
-          <?php 
-            foreach ($all_columns as $k => $v){
-                echo '<li class="ui-state-default" id="'.$k.'">'.$v.'</li>';
-              
-            }
-          ?>
-          
-        </ul>
+            <div style="overflow: auto;height:500px;"><!-- wrapper -->
+	        <ul id="sortable1" class="connectedSortable">
+	          <?php 
+	            foreach ($all_columns as $k => $v){
+	                echo '<li class="ui-state-default" id="'.$k.'">'.$v.'</li>';	              
+	            }
+	          ?>	          
+	        </ul>
+	        </div><!-- /wrapper -->
       </div>
 
       </div>
@@ -48,15 +46,15 @@ include("header.php")
             <h3 class="panel-title">Template Columns</h3>            
           </div>
           <div class="panel-body">
-
-        <ul id="sortable2" class="connectedSortable" >
-           <?php 
-            foreach ($required_columns as $k => $v){
-                echo '<li class="ui-state-highlight required" id ="'.$k.'">'.$v.'</li>';              
-            }
-          ?>
-        
-        </ul>
+			<div style="overflow: auto;height:500px;"><!-- wrapper -->
+	        <ul id="sortable2" class="connectedSortable" >
+	           <?php 
+	            foreach ($required_columns as $k => $v){
+	                echo '<li class="ui-state-highlight required" id ="'.$k.'">'.$v.'</li>';              
+	            }
+	          ?>	        
+	        </ul>
+	        </div><!-- /wrapper -->
       </div><!-- end of panel body -->
 	  </div><!-- end of panel -->
 	  <form method="post" action="<?php echo site_url("templates/index")?>">

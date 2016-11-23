@@ -29,7 +29,7 @@ include("header.php")
         <ul id="sortable1" class="connectedSortable">
           <?php 
             foreach ($template_col_list as $k => $v){
-                echo '<li class="ui-state-default" id="'.$k.'">'.$v.'</li>';              
+                echo '<li class="ui-state-highlight required" id="'.$k.'">'.$v.'</li>';              
             }
           ?>
          
@@ -49,21 +49,28 @@ include("header.php")
 
         <ul id="sortable2" class="connectedSortable" >
            <?php 
-            foreach ($up_file_col_list as $k => $v){
-                echo '<li class="ui-state-default" id ="'.$k.'" >'.
+           $i = 0;
+           
+           foreach ($up_file_col_list as $k => $v){
+           	
+                echo '<li class="ui-state-default" id ="'.$i.'" >'.
                 $v.
-                " <a href=\"#\" class=\"clearitem pull-right\">X</a>".
-                '</li>';              
-            }
+                " <a href=\"javascript:void(0)\" class=\"clearitem pull-right\">X</a>".
+                '</li>';  
+                $i++;
+            }//end foreach
           ?>
        
         </ul>
       </div><!-- end of panel body -->
 	  </div><!-- end of panel -->
-	  <form method="post" action="<?php echo site_url("templates/index")?>">
-	  <!-- <input type ="button" class ="btn btn-primary btn-sm" value ="Download Excel Template" id="btnDL">-->
-	  <input type="hidden" name="selected_col_list" id="selected_col_list" value="">
+	  <form method="post" action="<?php echo site_url("templates/preview_data")?>" onsubmit="">
+	  <input type="hidden" name="template_col_list" id="template_col_list" value="">
+	  <input type="hidden" name="up_file_col_list" id="up_file_col_list" value="">
+
 	  <input type ="submit" class ="btn btn-primary btn-lg pull-right" value ="Next" id="btnNext">
+       <button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
+ 
        </form>
     </div><!--/col-md-6-->
     
@@ -74,64 +81,48 @@ include("header.php")
 
 <script type="text/javascript">
 
-	var debug = false
+	var debug = true
 	
     $( document ).ready(function() {  
    
       $( "#sortable1, #sortable2" ).sortable({
-        connectWith: ".connectedSortable",
-        cancel: ".required"
+        	connectWith: ".connectedSortable",
+        	cancel: ".required"
       }).disableSelection();
 
       $( "#btnNext" ).click(function() {
         
-        var col_list = [];
-        var col_list_str = "";
+        var template_col_list = "";
+        $( "#sortable1 li" ).each(function( index ) {
+
+            template_col_list += $( this ).text() + '---'
+            
+          
+        });//end each
+
+        if(debug)console.log( "template_col_list: " + template_col_list );        
+        $("#template_col_list").val(template_col_list);
+        
+        var up_file_col_list_order = "";
         $( "#sortable2 li" ).each(function( index ) {
-          //console.log( index + ": " + $( this ).text() );
-           col_list.push({
-              index: index,
-              name: $( this ).text()           
-            });
-           col_list_str += $( this ).text() + '---'
+                 
+        	up_file_col_list_order += $(this).attr('id') + '---'
+        	if(debug)console.log( "element id  " + $(this).attr('id') )
           
         });//end each
         
-        if(debug)console.log( "col_list_str: " + col_list_str );
-		$("#selected_col_list").val(col_list_str);
-
-
+        if(debug)console.log( "up_file_col_list_order: " + up_file_col_list_order );
+		$("#up_file_col_list").val(up_file_col_list_order);
 		
-        
-        /*
-          var url = '<?php echo site_url('templates/create_template?col_list=')?>'+encodeURIComponent(col_list_str);
-          console.log('url:'+url)
-          window.location = url;
-          */
-          
-        /*
-        $.ajax({
-          url: "<?php echo site_url('templates/create_template')?>", 
-          data: { col_list: col_list} ,
-          success: function(result){
-            //console.log("result:"+result);
-            window.location = '<?php echo site_url('templates/create_template')?>';
-          }
-        });
-      */
-
-      });//end of click()
-
-      
-
-  });
+      });//end of click()     
 	
-  		$('#sortable2').on('click', '.clearitem', function() {
-    	    $(this).closest('li').remove();
-    	});
+  	});
+	
+  	$('#sortable2').on('click', '.clearitem', function() {
+    	 $(this).closest('li').remove();
+    });
 	    	
 	 function remove_element(element){
-		 alert(element);
 			$(element).fadeOut(300, function() { 
 				$(this).remove(); 
 		});

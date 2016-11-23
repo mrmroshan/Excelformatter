@@ -42,9 +42,24 @@ class Templates extends CI_Controller {
 		$data = array();
 		$data['all_columns'] = array(
 
-			'Srl.No' => 'Srl.No',
-			'AIRWAY'=>'AIRWAY',
+			'Srl.No' => 'Srl.No',		
 			'Bill'=> 'Bill',	
+			'Cutomer A/c#' => 'Cutomer A/c#',
+			'Pickup Number' => 'Pickup Number',
+			'Cnee Name(100)' => 'Cnee Name(100)',
+			'Company Name(100)' => 'Company Name(100)',
+			'Valid ID' => 'Valid ID',
+			'Address(250)'=> 'Address(250)',
+			'USER_ID'=>'USER_ID',
+			'Desciption of Goods(100)'=>'Desciption of Goods(100)',
+			'Pcs'=>'Pcs',
+			'Wt'=>'Wt',
+			'Calling'=>'Calling',
+			'ROUNDTRIP'=>'ROUNDTRIP',
+			'COD'=>'COD',
+			'COD Currency'=>'COD Currency',
+			'Cost of Goods'=>'Cost of Goods',
+			'COG Currency'=>'COG Currency',
 			'jcs no' => 'jcs no',	
 			'Ref1(50)' => 'Ref1(50)',
 			'Ref2(50)' => 'Ref2(50)', 			
@@ -84,22 +99,7 @@ class Templates extends CI_Controller {
 			);
 
 			$data['required_columns'] = array(
-			'Cutomer A/c#' => 'Cutomer A/c#',	
-			'Pickup Number' => 'Pickup Number',	
-			'Cnee Name(100)' => 'Cnee Name(100)',	
-			'Company Name(100)' => 'Company Name(100)', 	
-			'Valid ID' => 'Valid ID',	
-			'Address(250)'=> 'Address(250)',
-			'USER_ID'=>'USER_ID',	
-			'Desciption of Goods(100)'=>'Desciption of Goods(100)',	
-			'Pcs'=>'Pcs',	
-			'Wt'=>'Wt',	
-			'Calling'=>'Calling',	
-			'ROUNDTRIP'=>'ROUNDTRIP',
-			'COD'=>'COD',	
-			'COD Currency'=>'COD Currency',	
-			'Cost of Goods'=>'Cost of Goods',	
-			'COG Currency'=>'COG Currency'
+				'AIRWAY'=>'AIRWAY',
 			);
 
 		$post = $this->input->post();
@@ -172,9 +172,30 @@ class Templates extends CI_Controller {
 	}//end of function
 	
 	
-	private function map_fields(){
+	/**
+	 * get_clean_col_list_array()
+	 * 
+	 * This function returns clean array of collist when supplied with a 
+	 * column list string with '---' delimeter
+	 * 
+	 * @param string $col_list_str
+	 * @return array $clean_col_list_array
+	 */
+	private function get_clean_col_list_array($col_list_str){
 		
-		$data = array();
+		$clean_col_list_array = explode('---',$col_list_str);
+			
+		array_pop ($clean_col_list_array);//remove last element
+		
+		return $clean_col_list_array;
+		
+	}//end of function
+	
+	
+	
+	public function map_fields(){
+		
+		$data = array();		
 		
 		$up_file_col_list = $this->get_uploaded_file_col_list();
 		
@@ -192,7 +213,51 @@ class Templates extends CI_Controller {
 		$this->load->view('map_fields_view', $data);
 		
 	}//end of function
+	
+	
+	
+	public function preview_data(){
 		
+		$post_data = $this->input->post();
+		
+		$data = array();
+		
+		if(!empty($post_data['template_col_list'])){
+				
+			$template_col_list = $post_data['template_col_list'];
+				
+			$up_file_new_col_list_order = $post_data['up_file_col_list'];
+				
+			if($this->debug)log_message('debug','map_fields():$up_file_new_col_list_order:'. print_r($up_file_new_col_list_order,true));
+				
+			$new_up_col_index_array = $this->get_clean_col_list_array($up_file_new_col_list_order);
+				
+			if($this->debug)log_message('debug','map_fields():$new_up_col_index_array:'. print_r($new_up_col_index_array,true));
+				
+			$original_up_file_data = $this->get_excel_file_data_from_session();
+				
+			$new_data_array = array();				
+				
+			foreach($original_up_file_data as $rows=>$cols){
+				
+				foreach($new_up_col_index_array as $new_index){
+					
+					$new_data_array[$rows][]=$original_up_file_data[$rows][$new_index];
+					
+				}//end foreach
+			}
+			//var_dump($new_data_array);
+			
+			$data['new_data_array'] = $new_data_array;
+			
+			$data['original_up_file_data'] = $original_up_file_data;			
+			
+			$this->load->view('preview_view', $data);
+		}//end if
+		
+		
+	}//end of function
+	
 	
 	/**
 	 * upload()
@@ -358,6 +423,11 @@ class Templates extends CI_Controller {
 			$collist[] = $cols;
 			
 		}//endforeach
+		
+		if(empty(end($collist))){
+			
+			array_pop($collist);
+		}
 		
 		if($this->debug)log_message('debug','set_uploaded_file_col_list():$collist :'. print_r($collist,true));
 		
