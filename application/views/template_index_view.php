@@ -12,9 +12,15 @@ include("header.php")
     
     <div class="panel panel-default">
     <div class="panel-heading">
-      <h2 class="panel-title">Step 1</h2>
+      <h2 class="panel-title">Step 1 </h2>
     </div>
     <div class="panel-body">
+    <?php 
+    if(!empty ($this->session->flashdata('error'))){
+    	include 'error_msg.php';
+	}
+    ?>
+    
       <h3>Please select columns from 'All Columns' listing then drag and drop into red colour box to create the template  </h3>
   
     <div class="row">
@@ -57,9 +63,10 @@ include("header.php")
 	        </div><!-- /wrapper -->
       </div><!-- end of panel body -->
 	  </div><!-- end of panel -->
-	  <form method="post" action="<?php echo site_url("templates/index")?>">
-	  <!-- <input type ="button" class ="btn btn-primary btn-sm" value ="Download Excel Template" id="btnDL">-->
+	  
+	  <form method="post" action="<?php echo site_url("templates/wizard")?>">
 	  <input type="hidden" name="selected_col_list" id="selected_col_list" value="">
+	  <input type="hidden" name="step" id="next" value="upload">
 	  <input type ="submit" class ="btn btn-primary btn-lg pull-right" value ="Next" id="btnNext">
        </form>
     </div><!--/col-md-6-->

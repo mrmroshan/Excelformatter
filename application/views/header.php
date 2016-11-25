@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Excel Data Mapper</title>
+    <title>Excel Data Uploader</title>
 
     <!-- Bootstrap -->
    <?php include("css_js_code.php")?>
@@ -24,16 +24,16 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="<?php echo site_url()?>">Excel Data Mapper</a>
+          <a class="navbar-brand" href="<?php echo site_url()?>">Excel Data Uploader</a>
         </div>
         
         <?php  $controller = $this->uri->segment(1, 0);?>
 
         <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
+          <!-- <ul class="nav navbar-nav">
             <li <?php echo ($controller === 'templates')?' class="active" ': null;?>><a href="<?php echo site_url("templates/index")?>">Templates</a></li>            
             
-          </ul>
+          </ul>-->
         </div><!--/.nav-collapse -->
       </div>
     </nav>

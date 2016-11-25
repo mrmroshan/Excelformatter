@@ -12,7 +12,7 @@ include("header.php")
     
     <div class="panel panel-default">
     <div class="panel-heading">
-      <h2 class="panel-title">Step 3</h2>
+      <h2 class="panel-title">Step 2</h2>
     </div>
     <div class="panel-body">
       <p>Map the columns  </p>
@@ -22,13 +22,13 @@ include("header.php")
 
          <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">Template Columns</h3>
+            <h3 class="panel-title">Field List</h3>
           </div>
           <div class="panel-body">
             
         <ul id="sortable1" class="connectedSortable">
           <?php 
-            foreach ($template_col_list as $k => $v){
+            foreach ($all_field_list as $k => $v){
                 echo '<li class="ui-state-highlight required" id="'.$k.'">'.$v.'</li>';              
             }
           ?>
@@ -67,14 +67,20 @@ include("header.php")
 	  <form method="post" action="<?php echo site_url("templates/preview_data")?>" onsubmit="">
 	  <input type="hidden" name="template_col_list" id="template_col_list" value="">
 	  <input type="hidden" name="up_file_col_list" id="up_file_col_list" value="">
-
-	  <input type ="submit" class ="btn btn-primary btn-lg pull-right" value ="Next" id="btnNext">
-       <button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
- 
-       </form>
+	  
     </div><!--/col-md-6-->
-    
+     
     </div><!--/row-->
+  
+    <input type="hidden" name="step" id="step" value="preview">
+    <input type ="submit" class ="btn btn-primary btn-lg pull-right" value ="Next" id="btnNext">
+    </form>
+    
+    <form action="<?php echo site_url('templates/wizard')?>" method="post">
+    <input type="hidden" name="step" id="step" value="upload">
+    <button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
+     </form> 
+      
   </div><!--/panelbody-->
 
 </div><!-- /.container -->

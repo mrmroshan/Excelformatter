@@ -76,11 +76,13 @@ include("header.php")
 		    </tbody>
 		  </table>
 		</div><!--/ table wrapper -->
-      <!-- <form method="post" action="<?php echo site_url("templates/export_data")?>" onsubmit=""> -->
+      <!-- <form method="post" action="<?php echo site_url("ExcelUploader/export_data")?>" onsubmit=""> -->
 	  <button type ="submit" class ="btn btn-primary btn-lg pull-right"  id="btnNext">Export Data</button>
 	  
+      <form action="<?php echo site_url('ExcelUploader/wizard')?>" method="post">
+      <input type="hidden" name="step" id="step" value="mapping">
       <button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
- 
+      </form> 
       <!-- </form>-->
       
    
