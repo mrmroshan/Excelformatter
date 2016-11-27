@@ -324,10 +324,53 @@ class ExcelUploader extends CI_Controller {
 	public function validate_data(){
 		
 		$post_data = $this->input->post();
-		foreach($post_data as $field){
-			$$field[] = $field;
+		
+		$new_up_col_index_array = $this->get_uploaded_file_col_list();
+			
+			
+		$original_up_file_data = $this->get_excel_file_data_from_session();
+		
+		$all_fields_list = $this->get_all_fields_single_array();
+		
+		//$this->dump_data($new_up_col_index_array);
+		
+		$mapped_cols_array=array();
+		
+		foreach($post_data as $field=>$value){
+			
+			if( $value != 'Next' &&  $value !== 'validate' && $field != ""){
+				
+				$$field = $value;				
+				$mapped_cols_array[] = $$field;				
+			}			
 		}
-		$this->dump_data($field);
+		
+		$new_data_array = array();
+		
+		foreach($original_up_file_data as $rows=>$cols){
+			
+			foreach($mapped_cols_array as $index=>$col){				
+							
+				if($col != ''){
+					
+					$new_data_array[$rows][$index] = $original_up_file_data[$rows][$col];
+					
+				}else{
+					
+					$new_data_array[$rows][$index] = '';
+				}
+							
+			}//end of function
+			
+		}//end foreach
+			
+		$data['new_data_array'] = $new_data_array;
+			
+		$data['original_up_file_data'] = $original_up_file_data;
+		
+		$data['all_fields_list'] = $all_fields_list;
+			
+		$this->load->view('preview_grid_view', $data);
 		
 	}//end of function
 	
@@ -478,6 +521,32 @@ class ExcelUploader extends CI_Controller {
 	
 		return $clean_col_list_array;
 	
+	}//end of function
+	
+	
+	/**
+	 * get_all_fields_single_array()
+	 * 
+	 * This function returns all field lists as a single array from multi dimentional 
+	 * field list array
+	 * 
+	 * @return array $field_list_single_array
+	 */
+	private function get_all_fields_single_array(){
+		
+		$all_field_list_multy_array = $this->get_all_fields_array();
+		
+		$field_list_single_array = null;
+		
+		foreach($all_field_list_multy_array as $categories){
+			
+			foreach($categories as $field){
+				
+				$field_list_single_array[] = $field;
+			}
+		}
+		return $field_list_single_array;
+		
 	}//end of function
 	
 	

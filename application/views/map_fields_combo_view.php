@@ -38,9 +38,9 @@ include("header.php")
 					    foreach($up_file_col_list as $col_list){
 					    	
 					    	if( strpos( strtoupper(trim($k)), strtoupper(trim($col_list)) ) !== false ) {
-					    		echo '<option value="'.$col_list.'_'.$i.'" selected="selected">'.$col_list.'</option>';
+					    		echo '<option value="'.$i.'" selected="selected">'.$col_list.'</option>';
 					    	}else{
-					    		echo '<option value="'.$col_list.'_'.$i.'">'.$col_list.'</option>';
+					    		echo '<option value="'.$i.'">'.$col_list.'</option>';
 					    	}
 					    	$i++;
 					    }
@@ -60,7 +60,7 @@ include("header.php")
 	    <?php }//endforeach?>
 	    
 	    <input type="hidden" name="step" id="step" value="validate">
-	    <input type ="submit" class ="btn btn-primary btn-lg pull-right" value ="Next" id="btnNext">
+	    <input type ="submit" class ="btn btn-primary btn-lg pull-right" name="submit" value ="Next" id="btnNext">
 	    </form>
 	    
   	</div><!-- /col-md-12 -->	
