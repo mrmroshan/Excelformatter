@@ -216,8 +216,8 @@ class ExcelUploader extends CI_Controller {
 				//$this->map_fields();
 				$this->map_field_dropdowns();
 				break;
-			case 'preview':
-				$this->preview_data();
+			case 'validate':
+				$this->validate_data();
 				break;
 						
 				
@@ -321,6 +321,17 @@ class ExcelUploader extends CI_Controller {
 	
 	
 
+	public function validate_data(){
+		
+		$post_data = $this->input->post();
+		foreach($post_data as $field){
+			$$field[] = $field;
+		}
+		$this->dump_data($field);
+		
+	}//end of function
+	
+	
 	
 	
 	public function preview_data(){
@@ -476,19 +487,19 @@ class ExcelUploader extends CI_Controller {
 		$fields = array(
 				'AWB_INFO' => array(
 						'Srl.No' => 'Srl.No',
-						'Bill'=> 'Bill'),
+						'AIRWAY Bill'=> 'AIRWAY Bill'),
 				'CUSTOMER_INFO' => array(
 						'Cutomer A/c#' => 'Cutomer A/c#',
 						'Pickup Number' => 'Pickup Number',
 						'jcs no' => 'jcs no',
 				),
 				'REFERENCE_INFO'=>array(
-						'Ref1(50)' => 'Ref1(50)',
-						'Ref2(50)' => 'Ref2(50)',
+						'Ref1' => 'Ref1',
+						'Ref2' => 'Ref2',
 				),
 				'CONSIGNEE_INFO'=>array(
-						'Cnee Name(100)' => 'Cnee Name(100)',
-						'Company Name(100)' => 'Company Name(100)',
+						'Cnee Name' => 'Cnee Name',
+						'Company Name' => 'Company Name',
 						'Cnee Country Name'=>'Cnee Country Name',
 						'Cnee Country Code'=> 'Cnee Country Code',
 						'Cnee Province Name'=>'Cnee Province Name',
@@ -498,10 +509,10 @@ class ExcelUploader extends CI_Controller {
 						'Cnee Area'=>'Cnee Area',
 						'Cnee Area Code'=>'Cnee Area Code',
 						'Cnee Pin Code'=>'Cnee Pin Code',
-						'Email1(100)'=>'Email1(100)',
-						'Email2(100)'=>'Email2(100)',
+						'Email1'=>'Email1',
+						'Email2'=>'Email2',
 						'Valid ID' => 'Valid ID',
-						'Address(250)'=> 'Address(250)',
+						'Address'=> 'Address',
 				),
 				'SERVICE_INFO'=>array(
 						'Service Name'=>'Service Name',
@@ -511,8 +522,8 @@ class ExcelUploader extends CI_Controller {
 						'supplier Code'=>'supplier Code',
 				),
 				'PACKAGE_INFO'=>array(
-						'Description2(100)'=>'Description2(100)',
-						'Desciption of Goods(100)'=>'Desciption of Goods(100)',
+						'Description2'=>'Description2',
+						'Desciption of Goods'=>'Desciption of Goods',
 						'Pcs'=>'Pcs',
 						'Wt'=>'Wt',
 						'Calling'=>'Calling',
@@ -527,12 +538,12 @@ class ExcelUploader extends CI_Controller {
 						'Destination Station'=>'Destination Station',
 				),
 				'NOTE_INFO'=>array(
-						'Note1(250)'=>'Note1(250)',
-						'Note2(250)'=>'Note2(250)',
-						'Note3(250)'=> 'Note3(250)',
-						'Note4(250)'=> 'Note4(250)',
-						'Note5(250)'=>'Note5(250)',
-						'Note6(250)'=>'Note6(250)',
+						'Note1'=>'Note1',
+						'Note2'=>'Note2',
+						'Note3'=> 'Note3',
+						'Note4'=> 'Note4',
+						'Note5'=>'Note5',
+						'Note6'=>'Note6',
 				),
 				'CALL_INFO'=>array(
 						'Autodialer/TelMobile(Phone1)'=>'Autodialer/TelMobile(Phone1)',
@@ -736,6 +747,12 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
+	private function dump_data($data){
+		
+		echo '<pre>';
+		var_dump($data);
+		exit;
+	}
 	
 	
 	

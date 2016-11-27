@@ -15,7 +15,7 @@ include("header.php")
 	    if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>    
 	      <h3 style="text-align:center">Please select matching column names from the dropdowns to map with fields names</h3>
 	      <br>
-	      <form class="form-horizontal">
+	      <form class="form-horizontal" method="post" action="<?php echo site_url('ExcelUploader/wizard')?>">
 	      <?php foreach($all_field_list_array as $category=>$fields){?>
 	      <div class="row">
 	      <div class="col-md-10 col-md-offset-1" >
@@ -24,19 +24,25 @@ include("header.php")
 		    <div class="panel-heading">
 		      <h2 class="panel-title"><?php echo str_replace('_'," ",$category)?></h2>		      
 		    </div>
-		    <div class="panel-body ">
-		    
-  
+		    <div class="panel-body ">  
 		    
 		   	<?php foreach($fields as $k =>$v ){?>
 		   	<div class="form-group">
-    			<label for="<?php echo $k;?>" class="col-sm-2 control-label"><?php echo $k;?></label>
-    				<div class="col-sm-10">
-      				<select class="dropdown-toggle form-control" name="" id="up_file_fields_<?php echo $k?>">
+    			<label for="<?php echo $k;?>" class="col-sm-4 control-label"><?php echo $k;?></label>
+    				<div class="col-sm-8">
+      				<select class="dropdown-toggle form-control" style="width: 50%" name="<?php echo $k?>" id="<?php echo $k?>">
 					    <option value="">Please select a field</option>
-					    <?php 
+					    <?php 					    
+					   
+					    $i = 0;
 					    foreach($up_file_col_list as $col_list){
-					    	echo '<option value="'.$col_list.'">'.$col_list.'</option>';
+					    	
+					    	if( strpos( strtoupper(trim($k)), strtoupper(trim($col_list)) ) !== false ) {
+					    		echo '<option value="'.$col_list.'_'.$i.'" selected="selected">'.$col_list.'</option>';
+					    	}else{
+					    		echo '<option value="'.$col_list.'_'.$i.'">'.$col_list.'</option>';
+					    	}
+					    	$i++;
 					    }
 					    ?>
 					   		    
@@ -53,9 +59,10 @@ include("header.php")
 	    </div><!-- /row -->
 	    <?php }//endforeach?>
 	    
-	     <input type="hidden" name="step" id="step" value="upload">
+	    <input type="hidden" name="step" id="step" value="validate">
 	    <input type ="submit" class ="btn btn-primary btn-lg pull-right" value ="Next" id="btnNext">
 	    </form>
+	    
   	</div><!-- /col-md-12 -->	
 	</div><!-- /row -->
 </div><!-- /.container -->
