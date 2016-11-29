@@ -27,7 +27,7 @@ class ExcelUploader extends CI_Controller {
 
 		//load our new PHPExcel library
 		$this->load->library('excel');
-		$this->load->model('ExcelFormatter_model');
+		$this->load->model('ExcelUploader_model');
 		
 		
 
@@ -209,6 +209,7 @@ class ExcelUploader extends CI_Controller {
 				$this->index();
 				break;
 			case "upload":
+				
 				$this->upload_excel_file();
 				break;
 			case 'mapping':
@@ -216,8 +217,8 @@ class ExcelUploader extends CI_Controller {
 				//$this->map_fields();
 				$this->map_field_dropdowns();
 				break;
-			case 'validate':
-				$this->validate_data();
+			case 'preview_uploaded_data':
+				$this->preview_uploaded_data();
 				break;
 						
 				
@@ -234,7 +235,7 @@ class ExcelUploader extends CI_Controller {
 	 * Then prepares its column listing in an array. 
 	 */
 	public function upload_excel_file(){
-				
+		
 		$file_data = array();
 		
 		$file_data['error'] = null;
@@ -299,11 +300,15 @@ class ExcelUploader extends CI_Controller {
 	
 	}//end of function
 	
+	
+	
 	public function map_field_dropdowns(){
 	
+		
 		$data = array();
 	
 		$up_file_col_list = $this->get_uploaded_file_col_list();
+		
 	
 		$data['up_file_col_list'] = $up_file_col_list;
 	
@@ -320,49 +325,59 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
-
-	public function validate_data(){
+	/**
+	 * preview_uploaded_data()
+	 * 
+	 * This method previews uploaded data in a grid after mapping appropriate collumns with
+	 * master column template(master field list)
+	 * 
+	 */
+	public function preview_uploaded_data(){
 		
-		$post_data = $this->input->post();
+		$post_data = $this->input->post();			
 		
-		$new_up_col_index_array = $this->get_uploaded_file_col_list();
-			
-			
 		$original_up_file_data = $this->get_excel_file_data_from_session();
 		
 		$all_fields_list = $this->get_all_fields_single_array();
-		
-		//$this->dump_data($new_up_col_index_array);
-		
-		$mapped_cols_array=array();
+					
+		$mapped_cols_array = array();
 		
 		foreach($post_data as $field=>$value){
 			
-			if( $value != 'Next' &&  $value !== 'validate' && $field != ""){
+			if( $value != 'Next' &&  $value !== 'preview_uploaded_data' && $field != ""){
 				
-				$$field = $value;				
+				$$field = $value;	//make controlelr name as variable.
+				
 				$mapped_cols_array[] = $$field;				
 			}			
 		}
 		
 		$new_data_array = array();
 		
-		foreach($original_up_file_data as $rows=>$cols){
+		$mapped_col_count = 0;
+		
+		$original_col_count = 0 ;
+		
+		foreach($original_up_file_data as $rows=>$cols){			
 			
 			foreach($mapped_cols_array as $index=>$col){				
-							
-				if($col != ''){
-					
+				
+				if($col != '' ){				
+
 					$new_data_array[$rows][$index] = $original_up_file_data[$rows][$col];
-					
+
 				}else{
 					
 					$new_data_array[$rows][$index] = '';
+				
 				}
-							
-			}//end of function
+				
+								
+			}//end of function			
 			
 		}//end foreach
+		
+		$this->validate_uploaded_data_array($new_data_array);
 			
 		$data['new_data_array'] = $new_data_array;
 			
@@ -420,6 +435,13 @@ class ExcelUploader extends CI_Controller {
 		
 		
 	}//end of function
+	
+	
+	private function validate_uploaded_data_array($data_array){
+		
+		
+		
+	}//end function
 	
 	
 	/**
@@ -537,14 +559,15 @@ class ExcelUploader extends CI_Controller {
 		$all_field_list_multy_array = $this->get_all_fields_array();
 		
 		$field_list_single_array = null;
-		
+	
 		foreach($all_field_list_multy_array as $categories){
-			
+		
 			foreach($categories as $field){
-				
-				$field_list_single_array[] = $field;
+								
+				$field_list_single_array[] = $field['FIELD_LABEL'];				
 			}
 		}
+		
 		return $field_list_single_array;
 		
 	}//end of function
@@ -552,11 +575,31 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	private function get_all_fields_array(){
+	
+		$fields_dataset=$this->ExcelUploader_model->get_all_field_info();		
+		$fields = array();
+		
+		//$this->dump_data($fields_dataset);
+		
+		foreach($fields_dataset as $row)
+		{
+			$fields[$row['CAT_LABEL']][] = array(
+									'ID' => $row['FIELD_ID'],
+									'CATEGORY_ID' => $row['CATEGORY_ID'],
+									'FIELD_INDEX' => $row['FIELD_INDEX'],
+									'FIELD_LABEL' => $row['FIELD_LABEL'],
+									'REQUIRED' => $row['REQUIRED'],
+									'DATATYPE' => $row['DATATYPE']					
+											);
+		}
+		//$this->dump_data($fields);
+		return $fields;
 		
 		$fields = array(
 				'AWB_INFO' => array(
 						'Srl.No' => 'Srl.No',
-						'AIRWAY Bill'=> 'AIRWAY Bill'),
+						'AIRWAY Bill'=> 'AIRWAY Bill'
+						),
 				'CUSTOMER_INFO' => array(
 						'Cutomer A/c#' => 'Cutomer A/c#',
 						'Pickup Number' => 'Pickup Number',
@@ -601,8 +644,7 @@ class ExcelUploader extends CI_Controller {
 						'Del_Time'=>'Del_Time',
 						'INSURED'=>'INSURED',
 				),
-				'STATION_INFO'=>array(
-						'USER_ID'=>'USER_ID',
+				'STATION_INFO'=>array(					
 						'Source Station'=>'Source Station',
 						'Destination Station'=>'Destination Station',
 				),

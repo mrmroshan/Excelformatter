@@ -19,10 +19,10 @@ include("header.php")
 		
 			<table class="table table-bordered table table-hover">		    
 		    <?php 
-		    
+		    //echo '<pre>';var_dump($all_fields_list);exit;
 		     echo '<thead>';
 		     echo '<tr class="info">';
-		     		     
+		     echo '<th>Excel Row #</th>';		     
 		     foreach($all_fields_list as $index=>$field){
 		     	
 		     	echo '<th ">'.$field.'</th>';
@@ -37,8 +37,9 @@ include("header.php")
 		     foreach($new_data_array as $rows){
 		     	
 		     	echo ($i==1)? '<tr class="active">':'<tr>';
-			     
+		     	echo '<td>'.$i.'</td>';
 			     foreach($rows as $col){
+			     	
 			     	
 				    echo "<td>".$col."</td>";
 				    
