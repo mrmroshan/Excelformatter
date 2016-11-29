@@ -470,6 +470,7 @@ class ExcelUploader extends CI_Controller {
 		$new_data_array = array();
 		$flagd_col_names = array();
 		$flagd_empty_col_names = array();
+		$invalid_data_col_names= array();
 		
 		foreach($data_array as $datarows=>$datacolls){
 			
@@ -489,9 +490,9 @@ class ExcelUploader extends CI_Controller {
 							
 							$maxchars = (int)$mfarray['MAXCHARS'];
 							
-							if($mfarray['REQUIRED']==1){
-								
-								$is_empty = $this->is_empty_cell(trim($datacell));
+							$is_empty = $this->is_empty_cell(trim($datacell));
+							
+							if($mfarray['REQUIRED']==1){								
 								
 								if($is_empty){
 									
@@ -515,17 +516,25 @@ class ExcelUploader extends CI_Controller {
 									
 								}else{
 									
-									$datacell = '<div class="">'.$datacell.'</div>';
+									if($is_empty){
+										if(!empty($regexpattern)){
+												
+											$regx_result= preg_match("/$regexpattern/" , $datacell );
+												
+											if($regx_result ==0 ){
+												//echo "$regexpattern:  $datacell: ";
+												//$this->dump_data($regx_result);
+	
+												$invalid_data_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
+													
+												$datacell = '<div class="err_invalid_data">'.$datacell.'</div>';
+											}
+										}
+									}
 									
 								}
 								
-								if(!empty($regexpattern)){
-									echo $regexpattern;
-									$regx_result= preg_match("/$regexpattern/" , '@ test' );//^(0|[1-9][0-9]*)$
-									
-									$this->dump_data($regx_result);
-									
-								}
+								
 								
 							}//end if required
 							
@@ -579,7 +588,24 @@ class ExcelUploader extends CI_Controller {
 					'error',
 					"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
 			
-		}	
+		}
+		
+		if(!empty($invalid_data_col_names)){
+			
+			$fields_str = null;
+				
+			foreach($invalid_data_col_names as $index => $col_info){
+			
+				$fields_str .= $col_info.', ';
+			}
+				
+			$fields_str = rtrim($fields_str,', ');
+				
+			$this->session->set_flashdata(
+					'error',
+					"Following fields contains invalid data cells.<br><br>$fields_str");
+				
+		}
 		
 		return $new_data_array;
 		

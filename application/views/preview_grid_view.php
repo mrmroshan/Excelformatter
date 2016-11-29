@@ -4,6 +4,7 @@ include("header.php")
 <style>
 .err_exceed_limit{background-color: pink;}
 .err_empty{border: solid red 5px;width:100px;height:50px;}
+.err_invalid_data{border: solid black 5px;width:100px;height:50px;}
 </style>
 <div class="container">
 <div class="row">
