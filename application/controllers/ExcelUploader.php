@@ -352,6 +352,9 @@ class ExcelUploader extends CI_Controller {
 			}			
 		}
 		
+		
+		// THE KEY part!!!
+		
 		$new_data_array = array();
 		
 		$mapped_col_count = 0;
@@ -364,7 +367,15 @@ class ExcelUploader extends CI_Controller {
 				
 				if($col != '' ){				
 
-					$new_data_array[$rows][$index] = $original_up_file_data[$rows][$col];
+					//remove hidden controller chars
+					
+					$formatted_cell_data = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $original_up_file_data[$rows][$col]);
+					
+					$formatted_cell_data = $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
+					
+					$formatted_cell_data = preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
+					
+					$new_data_array[$rows][$index] = $formatted_cell_data;
 
 				}else{
 					
@@ -375,11 +386,9 @@ class ExcelUploader extends CI_Controller {
 								
 			}//end of function			
 			
-		}//end foreach
-		
-		$this->validate_uploaded_data_array($new_data_array);
+		}//end foreach	
 			
-		$data['new_data_array'] = $new_data_array;
+		$data['new_data_array'] = $this->validate_uploaded_data_array($new_data_array);
 			
 		$data['original_up_file_data'] = $original_up_file_data;
 		
@@ -439,10 +448,161 @@ class ExcelUploader extends CI_Controller {
 	
 	private function validate_uploaded_data_array($data_array){
 		
+		$all_field_list_multy_array = $this->get_all_fields_array();
 		
+		//make it a single multy array
+		$all_master_field_single_array = array();
+		
+		foreach($all_field_list_multy_array as $categories){
+			
+			foreach($categories as $category=>$field){
+				
+				array_push($all_master_field_single_array,$field);
+			}
+		}
+		
+		//$this->dump_data($all_master_field_single_array);
+		
+		//$this->dump_data($data_array);
+		
+		$row_no = 1;
+		
+		$new_data_array = array();
+		$flagd_col_names = array();
+		$flagd_empty_col_names = array();
+		
+		foreach($data_array as $datarows=>$datacolls){
+			
+			$data_col_index = 0;//for each row 
+			
+			foreach($datacolls as $datacell){
+				
+				if($row_no >=2){
+					
+					foreach ($all_master_field_single_array as $mfarray){
+						
+						//$this->dump_data($mfarray);
+						
+						if($mfarray['FIELD_INDEX'] == $data_col_index){
+							
+							$regexpattern = $mfarray['REGXPATTERN'];
+							
+							$maxchars = (int)$mfarray['MAXCHARS'];
+							
+							if($mfarray['REQUIRED']==1){
+								
+								$is_empty = $this->is_empty_cell(trim($datacell));
+								
+								if($is_empty){
+									
+									$flagd_empty_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
+									
+									$datacell = '<div class="err_empty">'.trim($datacell).'</div>';
+									
+								}
+								
+							}else{						
+							
+								$is_exceeded = $this->is_exceeded(trim($datacell),$maxchars);//
+								
+								if($is_exceeded){
+									
+									$flagd_col_names[$mfarray['FIELD_INDEX']] = array(
+															'label'=>$mfarray['FIELD_LABEL'],
+															'limit'=>$mfarray['MAXCHARS']);
+									
+									$datacell = '<div class="err_exceed_limit">'.trim($datacell).'</div>';
+									
+								}else{
+									
+									$datacell = '<div class="">'.$datacell.'</div>';
+									
+								}
+								
+								if(!empty($regexpattern)){
+									echo $regexpattern;
+									$regx_result= preg_match("/$regexpattern/" , '@ test' );//^(0|[1-9][0-9]*)$
+									
+									$this->dump_data($regx_result);
+									
+								}
+								
+							}//end if required
+							
+							$new_data_array[$row_no][$data_col_index] = $datacell;
+						}
+					}				
+					
+				}else{
+					
+					$new_data_array[$row_no][$data_col_index] = $datacell;
+				}
+				
+				$data_col_index++;
+			}//end foreach
+			$row_no++;
+		}//end foreach	
+	
+	
+		//set errro messages for required field empty strings
+		
+		if(!empty($flagd_empty_col_names)){
+			
+			$fields_str = null;
+			foreach($flagd_empty_col_names as $col){
+			
+				$fields_str .= $col.', ';
+			}
+				
+			$fields_str = rtrim($fields_str,', ');
+				
+			$this->session->set_flashdata(
+					'error',
+					"Following fields data connot be empty.<br><br>$fields_str");	
+			
+		}//end if 
+		
+		//set error message for limit exceeds
+		
+		if(!empty($flagd_col_names)){
+			
+			$fields_str = null;
+			
+			foreach($flagd_col_names as $index => $col_info){				
+				
+				$fields_str .= $col_info['label'].' max char limit is '.$col_info['limit'].', ';				
+			}
+			
+			$fields_str = rtrim($fields_str,', ');
+			
+			$this->session->set_flashdata(
+					'error',
+					"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
+			
+		}	
+		
+		return $new_data_array;
 		
 	}//end function
 	
+	
+	private function is_empty_cell($data){
+		
+		if($data === ""){return true;}else{return false;}
+		
+	}//end of function
+	
+	private function is_exceeded($str,$max){
+		
+		$len = strlen($str);
+		
+		if($len > $max){
+			return true;
+		}else{			
+			return false;
+		}
+		
+	}//end of function
 	
 	/**
 	 * upload()
@@ -589,7 +749,9 @@ class ExcelUploader extends CI_Controller {
 									'FIELD_INDEX' => $row['FIELD_INDEX'],
 									'FIELD_LABEL' => $row['FIELD_LABEL'],
 									'REQUIRED' => $row['REQUIRED'],
-									'DATATYPE' => $row['DATATYPE']					
+									'REGXPATTERN' => $row['REGXPATTERN'],
+									'MAXCHARS' => $row['MAXCHARS'],
+									'PRECHKFIELDS' => $row['PRECHKFIELDS']
 											);
 		}
 		//$this->dump_data($fields);

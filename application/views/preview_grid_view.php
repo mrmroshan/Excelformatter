@@ -1,7 +1,10 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 include("header.php")
 ?>
-
+<style>
+.err_exceed_limit{background-color: pink;}
+.err_empty{border: solid red 5px;width:100px;height:50px;}
+</style>
 <div class="container">
 <div class="row">
   <div class="col-md-12">
@@ -14,7 +17,7 @@ include("header.php")
     <h3>Please confirm the changes</h3>
             
         <hr>       
-       
+         <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
 		<div style="overflow:scroll;height:600px;width:100%"><!-- table wrapper -->
 		
 			<table class="table table-bordered table table-hover">		    
