@@ -35,7 +35,8 @@ include("header.php")
 		   	<?php foreach($fields as $k1){?>
 		   		
 				   	<div class="form-group">
-		    			<label for="<?php echo $k1['FIELD_LABEL'];?>" class="col-sm-4 control-label"><?php echo $k1['FIELD_LABEL'];?></label>
+		    			<label for="<?php echo $k1['FIELD_LABEL'];?>" class="col-sm-4 control-label"><?php echo $k1['FIELD_LABEL'];?>
+		    			<?php if($k1['REQUIRED'] == 1){?><font style="color:red">*</font><?php }?></label>
 		    				<div class="col-sm-8">
 		      				<select class="dropdown-toggle form-control" style="width: 50%" name="<?php echo str_replace(" ","_", $k1['FIELD_LABEL'])?>" id="<?php echo str_replace(" ","_", $k1['FIELD_LABEL'])?>">
 							    <option value="">Please select a field</option>
@@ -47,7 +48,7 @@ include("header.php")
 							    	if( strpos( strtoupper(trim($k1['FIELD_LABEL'])), strtoupper(trim($col_list)) ) !== false ) {
 							    		echo '<option value="'.$i.'" selected="selected">'.$col_list.'</option>';
 							    	}else{
-							    		echo '<option value="'.$i.'">'.$col_list.'</option>';
+							    		echo '<option value="'.$i.'"  >'.$col_list.'</option>';
 							    	}
 							    	$i++;
 							    }				   				

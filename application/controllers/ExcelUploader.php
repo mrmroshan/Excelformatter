@@ -39,7 +39,7 @@ class ExcelUploader extends CI_Controller {
 		$this->session->unset_userdata($array_items);
 	}
 
-	private function check_sessions($step){
+	private function check_sessions(){
 		
 		if(empty($this->session->userdata('template_col_list_array')) and 
 				empty($this->session->userdata('excel_data_array'))and 
@@ -52,7 +52,7 @@ class ExcelUploader extends CI_Controller {
 				
 			
 		}
-		
+		$step='';
 		switch($step){
 			case 'first':
 				break;
@@ -304,6 +304,7 @@ class ExcelUploader extends CI_Controller {
 	
 	public function map_field_dropdowns(){
 	
+		$this->check_sessions();
 		
 		$data = array();
 	
@@ -334,7 +335,11 @@ class ExcelUploader extends CI_Controller {
 	 */
 	public function preview_uploaded_data(){
 		
-		$post_data = $this->input->post();			
+		$this->check_sessions();
+		
+		$post_data = $this->input->post();	
+		
+		if(!empty($post_data['btnvalidate'])){$this->dump_data($post_data);}
 		
 		$original_up_file_data = $this->get_excel_file_data_from_session();
 		
@@ -403,7 +408,7 @@ class ExcelUploader extends CI_Controller {
 	
 	public function preview_data(){
 		
-		//$this->check_sessions('third');
+		$this->check_sessions();
 		
 		$post_data = $this->input->post();
 		
@@ -468,8 +473,11 @@ class ExcelUploader extends CI_Controller {
 		$row_no = 1;
 		
 		$new_data_array = array();
+		
 		$flagd_col_names = array();
+		
 		$flagd_empty_col_names = array();
+		
 		$invalid_data_col_names= array();
 		
 		foreach($data_array as $datarows=>$datacolls){
@@ -498,7 +506,7 @@ class ExcelUploader extends CI_Controller {
 									
 									$flagd_empty_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
 									
-									$datacell = '<div class="err_empty">'.trim($datacell).'</div>';
+									$datacell = '<div class="err_empty"><textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.$datacell.'</textarea></div>';
 									
 								}
 								
@@ -512,11 +520,11 @@ class ExcelUploader extends CI_Controller {
 															'label'=>$mfarray['FIELD_LABEL'],
 															'limit'=>$mfarray['MAXCHARS']);
 									
-									$datacell = '<div class="err_exceed_limit">'.trim($datacell).'</div>';
+									$datacell = '<div class="err_exceed_limit"><textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.$datacell.'</textarea></div>';
 									
 								}else{
 									
-									if($is_empty){
+									if(!$is_empty && strlen( $datacell) >0){
 										if(!empty($regexpattern)){
 												
 											$regx_result= preg_match("/$regexpattern/" , $datacell );
@@ -527,24 +535,22 @@ class ExcelUploader extends CI_Controller {
 	
 												$invalid_data_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
 													
-												$datacell = '<div class="err_invalid_data">'.$datacell.'</div>';
+												$datacell = '<div class="err_invalid_data"><textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.$datacell.'</textarea></div>';
 											}
 										}
 									}
 									
-								}
-								
-								
+								}							
 								
 							}//end if required
 							
-							$new_data_array[$row_no][$data_col_index] = $datacell;
+							$new_data_array[$row_no][$data_col_index] = $datacell;//
 						}
 					}				
 					
 				}else{
 					
-					$new_data_array[$row_no][$data_col_index] = $datacell;
+					$new_data_array[$row_no][$data_col_index] = $datacell;//'<input type ="text" value="'.$datacell.'" name="grid['.$row_no.']['.$data_col_index.']">';
 				}
 				
 				$data_col_index++;
@@ -552,6 +558,9 @@ class ExcelUploader extends CI_Controller {
 			$row_no++;
 		}//end foreach	
 	
+		
+		//Error messages all in one
+		$err_msg = null;
 	
 		//set errro messages for required field empty strings
 		
@@ -565,9 +574,11 @@ class ExcelUploader extends CI_Controller {
 				
 			$fields_str = rtrim($fields_str,', ');
 				
-			$this->session->set_flashdata(
-					'error',
-					"Following fields data connot be empty.<br><br>$fields_str");	
+			//$this->session->set_flashdata(
+			//		'error',
+			//		"Following fields data connot be empty.<br><br>$fields_str");	
+			
+			$err_msg = "Following fields data connot be empty.<br><br>$fields_str<br><br>";
 			
 		}//end if 
 		
@@ -584,9 +595,11 @@ class ExcelUploader extends CI_Controller {
 			
 			$fields_str = rtrim($fields_str,', ');
 			
-			$this->session->set_flashdata(
-					'error',
-					"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
+			//$this->session->set_flashdata(
+			//		'error',
+			//		"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
+			
+			$err_msg .= "Following fields contains data which is exceeded char limit.<br><br>$fields_str<br><br>";
 			
 		}
 		
@@ -601,12 +614,20 @@ class ExcelUploader extends CI_Controller {
 				
 			$fields_str = rtrim($fields_str,', ');
 				
-			$this->session->set_flashdata(
-					'error',
-					"Following fields contains invalid data cells.<br><br>$fields_str");
+			//$this->session->set_flashdata(
+			//		'error',
+			//		"Following fields contains invalid data cells.<br><br>$fields_str");
+			
+			$err_msg .= "Following fields contains invalid data cells.<br><br>$fields_str<br>";
 				
 		}
 		
+		if(!empty($err_msg)){
+			$this->session->set_flashdata(
+					'error',
+					$err_msg);
+		
+		}
 		return $new_data_array;
 		
 	}//end function

@@ -2,9 +2,10 @@
 include("header.php")
 ?>
 <style>
-.err_exceed_limit{background-color: pink;}
+.err_exceed_limit{border: solid pink 5px;height:50px;}
 .err_empty{border: solid red 5px;width:100px;height:50px;}
 .err_invalid_data{border: solid black 5px;width:100px;height:50px;}
+textarea{width:100%; height:100%;}
 </style>
 <div class="container">
 <div class="row">
@@ -20,7 +21,7 @@ include("header.php")
         <hr>       
          <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
 		<div style="overflow:scroll;height:600px;width:100%"><!-- table wrapper -->
-		
+		<form method="post" action="<?php echo site_url("ExcelUploader/preview_uploaded_data")?>">
 			<table class="table table-bordered table table-hover">		    
 		    <?php 
 		    //echo '<pre>';var_dump($all_fields_list);exit;
@@ -58,6 +59,9 @@ include("header.php")
 		   
 		  </table>
 		  <br>
+		  <button type ="submit" class ="btn btn-primary btn-lg" name="btnvalidate" id="btnvalidate">Validate</button>
+     
+		  </form>
 		</div><!--/ table wrapper -->
 		<br>
       <!-- <form method="post" action="<?php echo site_url("ExcelUploader/export_data")?>" onsubmit=""> -->
