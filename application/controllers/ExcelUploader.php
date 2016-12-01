@@ -11,10 +11,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class ExcelUploader extends CI_Controller {
 
 	private $debug = true;
+	
 	private $selected_col_list = null;
-	//private $up_excel_sheet_data = array();
-	//private $up_excel_sheet_cols = array();
-		
+			
 	function __construct(){
 
 		parent::__construct();
@@ -202,6 +201,7 @@ class ExcelUploader extends CI_Controller {
 	public function wizard(){
 		
 		$post_data = $this->input->post();
+		
 		$step = (!empty($post_data['step']))?$post_data['step']:'upload';
 			
 		switch($step){
@@ -218,7 +218,11 @@ class ExcelUploader extends CI_Controller {
 				$this->map_field_dropdowns();
 				break;
 			case 'preview_uploaded_data':
-				$this->preview_uploaded_data();
+				$this->preview_data_grid();
+				//$this->prepare_mapped_data_array();
+				break;
+			case 'validate_grid':
+				$this->preview_data_grid();
 				break;
 						
 				
@@ -274,10 +278,9 @@ class ExcelUploader extends CI_Controller {
 		}	
 		
 	}//end of function
+		
 	
-	
-	
-	
+	//depricated	
 	public function map_fields(){
 	
 		//$this->check_sessions('third');
@@ -308,8 +311,7 @@ class ExcelUploader extends CI_Controller {
 		
 		$data = array();
 	
-		$up_file_col_list = $this->get_uploaded_file_col_list();
-		
+		$up_file_col_list = $this->get_uploaded_file_col_list();		
 	
 		$data['up_file_col_list'] = $up_file_col_list;
 	
@@ -327,75 +329,56 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	/**
-	 * preview_uploaded_data()
+	 * preview_data_grid()
 	 * 
 	 * This method previews uploaded data in a grid after mapping appropriate collumns with
 	 * master column template(master field list)
 	 * 
 	 */
-	public function preview_uploaded_data(){
+	public function preview_data_grid(){
 		
 		$this->check_sessions();
 		
-		$post_data = $this->input->post();	
-		
-		if(!empty($post_data['btnvalidate'])){$this->dump_data($post_data);}
-		
-		$original_up_file_data = $this->get_excel_file_data_from_session();
+		$mapped_data_array = null;
 		
 		$all_fields_list = $this->get_all_fields_single_array();
-					
-		$mapped_cols_array = array();
 		
-		foreach($post_data as $field=>$value){
+		$post_data = $this->input->post();
+		
+		if(isset($post_data['btnUploadGrid'])){
 			
-			if( $value != 'Next' &&  $value !== 'preview_uploaded_data' && $field != ""){
-				
-				$$field = $value;	//make controlelr name as variable.
-				
-				$mapped_cols_array[] = $$field;				
-			}			
-		}
-		
-		
-		// THE KEY part!!!
-		
-		$new_data_array = array();
-		
-		$mapped_col_count = 0;
-		
-		$original_col_count = 0 ;
-		
-		foreach($original_up_file_data as $rows=>$cols){			
+			//$this->dump_data($post_data);
+			$grid_array = $post_data['grid'];
 			
-			foreach($mapped_cols_array as $index=>$col){				
-				
-				if($col != '' ){				
-
-					//remove hidden controller chars
-					
-					$formatted_cell_data = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $original_up_file_data[$rows][$col]);
-					
-					$formatted_cell_data = $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
-					
-					$formatted_cell_data = preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
-					
-					$new_data_array[$rows][$index] = $formatted_cell_data;
-
-				}else{
-					
-					$new_data_array[$rows][$index] = '';
-				
-				}
-				
-								
-			}//end of function			
+			$previous_grid_data_array = $this->get_mapped_data_array_from_session();
 			
-		}//end foreach	
+			//assign submitted grid data to previous grid data array
+		
+			foreach($grid_array as $row => $cols){
+				
+				foreach($cols as $k=>$v){
+					
+					$previous_grid_data_array[$row][$k] = $grid_array[$row][$k];
+				}				
+			}
 			
-		$data['new_data_array'] = $this->validate_uploaded_data_array($new_data_array);
+			$mapped_data_array = $previous_grid_data_array;
 			
-		$data['original_up_file_data'] = $original_up_file_data;
+			$this->set_mapped_data_array_in_session($mapped_data_array);
+			
+		}else{			
+			
+			$mapped_cols_array = $this->prepare_mapped_cols_array();
+			
+			$mapped_data_array = $this->prepare_mapped_data_array();
+			
+		}//end if post
+		
+		//$this->dump_data($mapped_data_array);
+		
+		$data['mapped_data_array'] = $this->validate_uploaded_data_array($mapped_data_array);
+			
+		//$data['original_up_file_data'] = $original_up_file_data;
 		
 		$data['all_fields_list'] = $all_fields_list;
 			
@@ -404,51 +387,136 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
-	
-	
+
+	//depricated
+	/**
+	 * Preview_data()
+	 *
+	 * This function is depricated
+	 */
 	public function preview_data(){
-		
+	
 		$this->check_sessions();
-		
+	
 		$post_data = $this->input->post();
-		
+	
 		$data = array();
-		
+	
 		if(!empty($post_data['template_col_list'])){
-				
+	
 			$template_col_list = $post_data['template_col_list'];
-				
+	
 			$up_file_new_col_list_order = $post_data['up_file_col_list'];
-				
+	
 			if($this->debug)log_message('debug','map_fields():$up_file_new_col_list_order:'. print_r($up_file_new_col_list_order,true));
-				
+	
 			$new_up_col_index_array = $this->get_clean_col_list_array($up_file_new_col_list_order);
-				
+	
 			if($this->debug)log_message('debug','map_fields():$new_up_col_index_array:'. print_r($new_up_col_index_array,true));
-				
+	
 			$original_up_file_data = $this->get_excel_file_data_from_session();
-				
-			$new_data_array = array();				
-				
+	
+			$new_data_array = array();
+	
 			foreach($original_up_file_data as $rows=>$cols){
-				
+	
 				foreach($new_up_col_index_array as $new_index){
-					
+						
 					$new_data_array[$rows][]=$original_up_file_data[$rows][$new_index];
-					
+						
 				}//end foreach
 			}
 			//var_dump($new_data_array);
-			
+				
 			$data['new_data_array'] = $new_data_array;
-			
-			$data['original_up_file_data'] = $original_up_file_data;			
-			
+				
+			$data['original_up_file_data'] = $original_up_file_data;
+				
 			$this->load->view('preview_view', $data);
 		}//end if
+	
+	
+	}//end of function
 		
+	
+	
+	private function prepare_mapped_data_array(){
+		
+		// THE KEY part!!!
+		
+		$mapped_data_array = array();
+		
+		$mapped_col_count = 0;
+		
+		$original_col_count = 0 ;
+		
+		$original_up_file_data = $this->get_excel_file_data_from_session();
+		
+		$mapped_cols_array = $this->get_mapped_cols_array();
+		
+		$mapped_data_array = array();
+		
+		foreach($original_up_file_data as $rows=>$cols){
+				
+			foreach($mapped_cols_array as $index=>$col){
+		
+				if($col != '' ){
+		
+					//remove hidden controller chars
+						
+					$formatted_cell_data = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $original_up_file_data[$rows][$col]);
+						
+					$formatted_cell_data = $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
+						
+					$formatted_cell_data = preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
+						
+					$mapped_data_array[$rows][$index] = $formatted_cell_data;
+		
+				}else{
+						
+					$mapped_data_array[$rows][$index] = '';		
+				}		
+				
+			}//end foreach
+			
+		}//end foreach
+		
+		$this->set_mapped_data_array_in_session($mapped_data_array);
+		
+		return $mapped_data_array;
 		
 	}//end of function
+	
+	private function set_mapped_data_array_in_session($mapped_data_array){
+		
+		$this->session->set_userdata('mapped_data_array',$mapped_data_array);
+		
+	}//end of function
+		
+	private function prepare_mapped_cols_array(){
+		
+		//get all select values and prepare mapped colls array
+		
+		$post_data = $this->input->post();
+			
+		$mapped_cols_array = array();
+		
+		foreach($post_data as $field=>$value){
+				
+			if( $value != 'Next' &&  $value !== 'preview_uploaded_data' && $field != ""){
+		
+				$$field = $value;	//make controlelr name as variable.
+		
+				$mapped_cols_array[] = $$field;
+			}
+		}
+		
+		$this->session->set_userdata('mapped_cols_array',$mapped_cols_array);
+				
+		return $mapped_cols_array;
+		
+	}//end of function
+	
 	
 	
 	private function validate_uploaded_data_array($data_array){
@@ -578,7 +646,7 @@ class ExcelUploader extends CI_Controller {
 			//		'error',
 			//		"Following fields data connot be empty.<br><br>$fields_str");	
 			
-			$err_msg = "Following fields data connot be empty.<br><br>$fields_str<br><br>";
+			$err_msg = "Following fields data connot be empty.<br><br><b>$fields_str</b><br><br>";
 			
 		}//end if 
 		
@@ -599,7 +667,7 @@ class ExcelUploader extends CI_Controller {
 			//		'error',
 			//		"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
 			
-			$err_msg .= "Following fields contains data which is exceeded char limit.<br><br>$fields_str<br><br>";
+			$err_msg .= "Following fields contains data which is exceeded char limit.<br><br><b>$fields_str</b><br><br>";
 			
 		}
 		
@@ -618,7 +686,7 @@ class ExcelUploader extends CI_Controller {
 			//		'error',
 			//		"Following fields contains invalid data cells.<br><br>$fields_str");
 			
-			$err_msg .= "Following fields contains invalid data cells.<br><br>$fields_str<br>";
+			$err_msg .= "Following fields contains invalid data cells.<br><br><b>$fields_str</b><br>";
 				
 		}
 		
@@ -638,6 +706,7 @@ class ExcelUploader extends CI_Controller {
 		if($data === ""){return true;}else{return false;}
 		
 	}//end of function
+	
 	
 	private function is_exceeded($str,$max){
 		
@@ -734,6 +803,39 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	/**
+	 * get_mapped_cols_array()
+	 * 
+	 * This function returns mapped cols array from session
+	 * 
+	 * @return array mapped_cols_array
+	 */
+	private function get_mapped_cols_array(){
+		
+		$mapped_cols_array = $this->session->userdata('mapped_cols_array');
+		
+		return $mapped_cols_array;
+		
+	}//end of function
+	
+	
+	/**
+	 * get_mapped_data_array_from_session()
+	 * 
+	 * This function gets mapped data array from session then returns
+	 * 
+	 * @return array $mapped_data_array
+	 */
+	private function get_mapped_data_array_from_session(){
+		
+		$mapped_data_array = $this->session->userdata('mapped_data_array');
+		
+		return $mapped_data_array;
+		
+	}//end of function
+	
+	
+	
+	/**
 	 * get_clean_col_list_array()
 	 *
 	 * This function returns clean array of collist when supplied with a
@@ -778,12 +880,12 @@ class ExcelUploader extends CI_Controller {
 		return $field_list_single_array;
 		
 	}//end of function
-	
-	
+		
 	
 	private function get_all_fields_array(){
 	
-		$fields_dataset=$this->ExcelUploader_model->get_all_field_info();		
+		$fields_dataset=$this->ExcelUploader_model->get_all_field_info();	
+		
 		$fields = array();
 		
 		//$this->dump_data($fields_dataset);
@@ -802,91 +904,12 @@ class ExcelUploader extends CI_Controller {
 											);
 		}
 		//$this->dump_data($fields);
-		return $fields;
 		
-		$fields = array(
-				'AWB_INFO' => array(
-						'Srl.No' => 'Srl.No',
-						'AIRWAY Bill'=> 'AIRWAY Bill'
-						),
-				'CUSTOMER_INFO' => array(
-						'Cutomer A/c#' => 'Cutomer A/c#',
-						'Pickup Number' => 'Pickup Number',
-						'jcs no' => 'jcs no',
-				),
-				'REFERENCE_INFO'=>array(
-						'Ref1' => 'Ref1',
-						'Ref2' => 'Ref2',
-				),
-				'CONSIGNEE_INFO'=>array(
-						'Cnee Name' => 'Cnee Name',
-						'Company Name' => 'Company Name',
-						'Cnee Country Name'=>'Cnee Country Name',
-						'Cnee Country Code'=> 'Cnee Country Code',
-						'Cnee Province Name'=>'Cnee Province Name',
-						'Cnee Province Code'=>'Cnee Province Code',
-						'Cnee City Name'=>'Cnee City Name',
-						'Cnee City Code'=>'Cnee City Code',
-						'Cnee Area'=>'Cnee Area',
-						'Cnee Area Code'=>'Cnee Area Code',
-						'Cnee Pin Code'=>'Cnee Pin Code',
-						'Email1'=>'Email1',
-						'Email2'=>'Email2',
-						'Valid ID' => 'Valid ID',
-						'Address'=> 'Address',
-				),
-				'SERVICE_INFO'=>array(
-						'Service Name'=>'Service Name',
-						'Service ID'=>'Service ID',
-						'SHIPMENT NAME'=>'SHIPMENT NAME',
-						'SHIPMENT CODE'=>'SHIPMENT CODE',
-						'supplier Code'=>'supplier Code',
-				),
-				'PACKAGE_INFO'=>array(
-						'Description2'=>'Description2',
-						'Desciption of Goods'=>'Desciption of Goods',
-						'Pcs'=>'Pcs',
-						'Wt'=>'Wt',
-						'Calling'=>'Calling',
-						'ROUNDTRIP'=>'ROUNDTRIP',
-						'Del_Date'=>'Del_Date',
-						'Del_Time'=>'Del_Time',
-						'INSURED'=>'INSURED',
-				),
-				'STATION_INFO'=>array(					
-						'Source Station'=>'Source Station',
-						'Destination Station'=>'Destination Station',
-				),
-				'NOTE_INFO'=>array(
-						'Note1'=>'Note1',
-						'Note2'=>'Note2',
-						'Note3'=> 'Note3',
-						'Note4'=> 'Note4',
-						'Note5'=>'Note5',
-						'Note6'=>'Note6',
-				),
-				'CALL_INFO'=>array(
-						'Autodialer/TelMobile(Phone1)'=>'Autodialer/TelMobile(Phone1)',
-						'(TelHome)Phone2'=>'(TelHome)Phone2',
-						'(WhatsApp)Phone3'=>'(TelHome)Phone2',
-						'(TelWork)Phone4'=>'(TelWork)Phone4',
-						'Phone5'=>'Phone5',
-						'Phone6'=>'Phone6',
-				),
-				'COD_INFO'=>array(
-						'COD'=>'COD',
-						'COD Currency'=>'COD Currency',
-						'Cost of Goods'=>'Cost of Goods',
-						'COG Currency'=>'COG Currency',
-				)				
-		);
-		
-		return $fields;
-		
+		return $fields;		
+	
 	}//end of function
 	
-	
-	
+		
 	private function get_all_fields(){
 		
 		$fields = array(		
@@ -1034,8 +1057,7 @@ class ExcelUploader extends CI_Controller {
 		if($this->debug)log_message('debug','set_template_col_list_in_session(): $$template_col_list :'. print_r($template_col_list,true));
 	
 	}//end of function
-	
-		
+			
 	
 	/**
 	 * set_uploaded_file_col_list()

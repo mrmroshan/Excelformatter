@@ -21,7 +21,7 @@ textarea{width:100%; height:100%;}
         <hr>       
          <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
 		<div style="overflow:scroll;height:600px;width:100%"><!-- table wrapper -->
-		<form method="post" action="<?php echo site_url("ExcelUploader/preview_uploaded_data")?>">
+		<form method="post" action="<?php echo site_url("ExcelUploader/wizard")?>">
 			<table class="table table-bordered table table-hover">		    
 		    <?php 
 		    //echo '<pre>';var_dump($all_fields_list);exit;
@@ -39,7 +39,7 @@ textarea{width:100%; height:100%;}
 		     
 		     $i=1;
 		     echo '<tbody>';
-		     foreach($new_data_array as $rows){
+		     foreach($mapped_data_array as $rows){
 		     	
 		     	echo ($i==1)? '<tr class="active">':'<tr>';
 		     	echo '<td>'.$i.'</td>';
@@ -58,14 +58,12 @@ textarea{width:100%; height:100%;}
 		    ?>		     
 		   
 		  </table>
-		  <br>
-		  <button type ="submit" class ="btn btn-primary btn-lg" name="btnvalidate" id="btnvalidate">Validate</button>
-     
-		  </form>
+		  		  
 		</div><!--/ table wrapper -->
 		<br>
-      <!-- <form method="post" action="<?php echo site_url("ExcelUploader/export_data")?>" onsubmit=""> -->
-	  <button type ="submit" class ="btn btn-primary btn-lg pull-right"  id="btnNext">Export Data</button>
+		<input type="hidden" name="step" id="step" value="validate_grid">
+        <button type ="submit" class ="btn btn-primary btn-lg pull-right"  id="btnUploadGrid" name="btnUploadGrid" value="upload_grid">Upload Grid</button>
+	  </form>
 	  
       <form action="<?php echo site_url('ExcelUploader/wizard')?>" method="post">
       <input type="hidden" name="step" id="step" value="mapping">
