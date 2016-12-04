@@ -470,6 +470,8 @@ class ExcelUploader extends CI_Controller {
 						
 					$formatted_cell_data = preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $formatted_cell_data);
 						
+					$formatted_cell_data = $this->rip_tags($formatted_cell_data);
+					
 					$mapped_data_array[$rows][$index] = $formatted_cell_data;
 		
 				}else{
@@ -521,6 +523,8 @@ class ExcelUploader extends CI_Controller {
 	
 	private function validate_uploaded_data_array($data_array){
 		
+		$debug = true;
+		
 		$all_field_list_multy_array = $this->get_all_fields_array();
 		
 		//make it a single multy array
@@ -539,6 +543,8 @@ class ExcelUploader extends CI_Controller {
 		//$this->dump_data($data_array);
 		
 		$row_no = 1;
+		
+		$empty_cell_count = 0;
 		
 		$new_data_array = array();
 		
@@ -559,40 +565,52 @@ class ExcelUploader extends CI_Controller {
 					foreach ($all_master_field_single_array as $mfarray){
 						
 						//$this->dump_data($mfarray);
+						$regexpattern = $mfarray['REGXPATTERN'];
+							
+						$maxchars = (int)$mfarray['MAXCHARS'];						
+							
+						$is_empty = $this->is_empty_cell($datacell);
 						
-						if($mfarray['FIELD_INDEX'] == $data_col_index){
+						if($mfarray['FIELD_INDEX'] == $data_col_index){							
 							
-							$regexpattern = $mfarray['REGXPATTERN'];
+							$is_exceeded = $this->is_exceeded($datacell,$maxchars);
 							
-							$maxchars = (int)$mfarray['MAXCHARS'];
+							//$maxchars <= strlen(trim($datacell)) ,$is_exceeded == 'Y'
 							
-							$is_empty = $this->is_empty_cell(trim($datacell));
+							//if((int)strlen($datacell) > (int)$maxchars){							
 							
-							if($mfarray['REQUIRED']==1){								
+							if($is_exceeded == 'Y'){							
+									
+								$flagd_col_names[$mfarray['FIELD_INDEX']] = array(
+										'label'=>$mfarray['FIELD_LABEL'],
+										'limit'=>$mfarray['MAXCHARS']);
+									
+								$datacell = '<div class="err_exceed_limit">'.
+										'<textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.
+										$datacell.'</textarea></div>';
 								
-								if($is_empty){
-									
-									$flagd_empty_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
-									
-									$datacell = '<div class="err_empty"><textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.$datacell.'</textarea></div>';
-									
-								}
 								
-							}else{						
-							
-								$is_exceeded = $this->is_exceeded(trim($datacell),$maxchars);//
+							}else{					
 								
-								if($is_exceeded){
+								if($mfarray['REQUIRED']==1){
 									
-									$flagd_col_names[$mfarray['FIELD_INDEX']] = array(
-															'label'=>$mfarray['FIELD_LABEL'],
-															'limit'=>$mfarray['MAXCHARS']);
-									
-									$datacell = '<div class="err_exceed_limit"><textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.$datacell.'</textarea></div>';
+									if($is_empty){
+											
+										$flagd_empty_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
+											
+										//$datacell = $this->rip_tags($datacell);
+											
+										$datacell = '<div class="err_empty"><textarea name="grid['.$row_no.']['.$data_col_index.']" cols="10" rows="2">'.$datacell.'</textarea></div>';
+										
+										$empty_cell_count++;
+									}
 									
 								}else{
 									
+									//$datacell = $this->rip_tags($datacell); 
+									
 									if(!$is_empty && strlen( $datacell) >0){
+										
 										if(!empty($regexpattern)){
 												
 											$regx_result= preg_match("/$regexpattern/" , $datacell );
@@ -612,13 +630,24 @@ class ExcelUploader extends CI_Controller {
 								
 							}//end if required
 							
-							$new_data_array[$row_no][$data_col_index] = $datacell;//
+							if($debug){
+								
+								$new_data_array[$row_no][$data_col_index] = $datacell. 
+																" <br>is_empty:$is_empty
+																  <br>is_exeeded:$is_exceeded
+																  <br>max_char:$maxchars
+																  <br>char len:".strlen($datacell)."";
+							}else{
+								
+								$new_data_array[$row_no][$data_col_index] = $datacell;//
+							}
 						}
 					}				
 					
 				}else{
 					
-					$new_data_array[$row_no][$data_col_index] = $datacell;//'<input type ="text" value="'.$datacell.'" name="grid['.$row_no.']['.$data_col_index.']">';
+					$new_data_array[$row_no][$data_col_index] = $datacell;
+					
 				}
 				
 				$data_col_index++;
@@ -635,6 +664,7 @@ class ExcelUploader extends CI_Controller {
 		if(!empty($flagd_empty_col_names)){
 			
 			$fields_str = null;
+			
 			foreach($flagd_empty_col_names as $col){
 			
 				$fields_str .= $col.', ';
@@ -646,7 +676,7 @@ class ExcelUploader extends CI_Controller {
 			//		'error',
 			//		"Following fields data connot be empty.<br><br>$fields_str");	
 			
-			$err_msg = "Following fields data connot be empty.<br><br><b>$fields_str</b><br><br>";
+			$err_msg = "Following column(s) data connot be empty.<br><br><b>$fields_str</b><br><br>";
 			
 		}//end if 
 		
@@ -667,7 +697,7 @@ class ExcelUploader extends CI_Controller {
 			//		'error',
 			//		"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
 			
-			$err_msg .= "Following fields contains data which is exceeded char limit.<br><br><b>$fields_str</b><br><br>";
+			$err_msg .= "Following column(s) contains data which is exceeded char limit.<br><br><b>$fields_str</b><br><br>";
 			
 		}
 		
@@ -680,22 +710,26 @@ class ExcelUploader extends CI_Controller {
 				$fields_str .= $col_info.', ';
 			}
 				
-			$fields_str = rtrim($fields_str,', ');
-				
-			//$this->session->set_flashdata(
-			//		'error',
-			//		"Following fields contains invalid data cells.<br><br>$fields_str");
+			$fields_str = rtrim($fields_str,', ');				
 			
-			$err_msg .= "Following fields contains invalid data cells.<br><br><b>$fields_str</b><br>";
+			$err_msg .= "Following column(s) contains invalid data cells.<br><br><b>$fields_str</b><br>";
 				
 		}
 		
 		if(!empty($err_msg)){
-			$this->session->set_flashdata(
-					'error',
-					$err_msg);
+			
+			$this->session->set_flashdata('error',$err_msg);
 		
 		}
+		
+		if($empty_cell_count > 10){
+			
+			$this->session->set_flashdata('error',"This file contains too many empty values for required column(s)<br>Please fix the issue, go back, then re upload");
+							
+			//redirect('ExcelUploader/index', 'Location');
+			
+		}
+		
 		return $new_data_array;
 		
 	}//end function
@@ -703,22 +737,64 @@ class ExcelUploader extends CI_Controller {
 	
 	private function is_empty_cell($data){
 		
+		$data = $this->rip_tags($data);
+		
 		if($data === ""){return true;}else{return false;}
 		
 	}//end of function
 	
 	
+	/**
+	 * rip_tags()
+	 * 
+	 * hhttp://php.net/manual/en/function.strip-tags.php#110280
+	 * 
+	 * @param unknown $string
+	 * @return string
+	 */
+	private function rip_tags($string) {
+	
+		// ----- remove HTML TAGs -----
+		$string = preg_replace ('/<[^>]*>/', ' ', $string);
+	
+		// ----- remove control characters -----
+		$string = str_replace("\r", '', $string);    // --- replace with empty space
+		
+		$string = str_replace("\n", ' ', $string);   // --- replace with space
+		
+		$string = str_replace("\t", ' ', $string);   // --- replace with space
+	
+		// ----- remove multiple spaces -----
+		$string = trim(preg_replace('/ {2,}/', ' ', $string));
+	
+		return $string;
+	
+	}
+	
+	
 	private function is_exceeded($str,$max){
+		
+		$str = $this->rip_tags($str);
 		
 		$len = strlen($str);
 		
-		if($len > $max){
-			return true;
-		}else{			
-			return false;
+		$result = 'N';
+		
+		if((int)$len > (int)$max){
+			
+			$result =  'Y';
+			
+		}else{
+			
+			$result = 'N';
+			
 		}
 		
+		return $result;
+		
 	}//end of function
+	
+	
 	
 	/**
 	 * upload()
@@ -736,6 +812,7 @@ class ExcelUploader extends CI_Controller {
 		if(!$upload_feedback ){
 	
 			$data = array('error'=> $this->upload->display_errors());
+			
 			$this->session->set_flashdata(
 					'error',
 					$this->upload->display_errors());
@@ -800,6 +877,8 @@ class ExcelUploader extends CI_Controller {
 		$this->set_uploaded_file_col_list($excel_data_array);
 	
 	}//end of function
+	
+	
 	
 	
 	/**

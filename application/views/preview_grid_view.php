@@ -69,14 +69,21 @@ textarea{width:100%; height:100%;}
       <input type="hidden" name="step" id="step" value="mapping">
       <button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
       </form> 
-      <!-- </form>-->
-      
-   
+       
     </div>
     </div>
     </div>
   </div>
 </div>
 </div><!-- /.container -->
+
+<script>
+$(document).ready(function() {	
+	
+	$("div.err_empty , div.err_invalid_data , div.err_exceed_limit").closest( "tr" ).css( "background-color", "orange" );
+	
+});
+
+</script>
 
 <?php include ("footer.php")?>

@@ -15,7 +15,7 @@ include("header.php")
 	    if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>    
 	      <h3 style="text-align:center">Please select matching column names from the dropdowns to map with fields names</h3>
 	      <br>
-	      <form class="form-horizontal" method="post" action="<?php echo site_url('ExcelUploader/wizard')?>" onsubmit="">
+	      <form id = "mapfields" class="form-horizontal" method="post" action="<?php echo site_url('ExcelUploader/wizard')?>" onsubmit="">
 	     	
 	      <?php 
 	      
@@ -67,9 +67,15 @@ include("header.php")
 	    </div><!-- /row -->
 	    <?php }//endforeach?>
 	    
+	     
+	    
 	    <input type="hidden" name="step" id="step" value="preview_uploaded_data">
 	    <input type ="submit" class ="btn btn-primary btn-lg pull-right" name="submit" value ="Next" id="btnNext">
 	    </form>
+	    <form action="<?php echo site_url('ExcelUploader/wizard')?>" method="post">
+     	<input type="hidden" name="step" id="step" value="upload">
+     	<button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
+     	</form> 
 	    
   	</div><!-- /col-md-12 -->	
 	</div><!-- /row -->
@@ -89,17 +95,12 @@ $(document).ready(function() {
 	 	
 		foreach($fields as $k1){
 			
-			if($k1['REQUIRED'] == 1){
-				
-				?>
-				
-				required_fields.push( '<?php echo  str_replace(" ","_", $k1['FIELD_LABEL']);?>');
-				
+			if($k1['REQUIRED'] == 1){				
+				?>				
+				required_fields.push( '<?php echo  str_replace(" ","_", $k1['FIELD_LABEL']);?>');				
 				<?php 
-			}
-			
-		}//end foreach
-		
+			}			
+		}//end foreach		
 	 }//end foreach
 	 
 	 ?>
@@ -111,7 +112,7 @@ $(document).ready(function() {
 		  
 		});
 			  
-	  $( "form" ).submit(function( event ) {
+	  $( "#mapfields" ).submit(function( event ) {
 
 		 var empty_fields_list = "";
 		  
