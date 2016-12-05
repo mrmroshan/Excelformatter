@@ -26,6 +26,7 @@ class ExcelUploader extends CI_Controller {
 
 		//load our new PHPExcel library
 		$this->load->library('excel');
+		//$this->load->library('SOAPClient_lib');
 		$this->load->model('ExcelUploader_model');
 		
 		
@@ -489,6 +490,9 @@ class ExcelUploader extends CI_Controller {
 		
 	}//end of function
 	
+	
+	
+	
 	private function set_mapped_data_array_in_session($mapped_data_array){
 		
 		$this->session->set_userdata('mapped_data_array',$mapped_data_array);
@@ -544,6 +548,8 @@ class ExcelUploader extends CI_Controller {
 		
 		$row_no = 1;
 		
+		$regx_result = null;
+		
 		$empty_cell_count = 0;
 		
 		$new_data_array = array();
@@ -594,7 +600,7 @@ class ExcelUploader extends CI_Controller {
 								
 								if($mfarray['REQUIRED']==1){
 									
-									if($is_empty){
+									if($is_empty == 'Y'){
 											
 										$flagd_empty_col_names[$mfarray['FIELD_INDEX']] = $mfarray['FIELD_LABEL'];
 											
@@ -609,7 +615,7 @@ class ExcelUploader extends CI_Controller {
 									
 									//$datacell = $this->rip_tags($datacell); 
 									
-									if(!$is_empty && strlen( $datacell) >0){
+									if($is_empty == 'N' && strlen( $datacell) >0){
 										
 										if(!empty($regexpattern)){
 												
@@ -636,7 +642,9 @@ class ExcelUploader extends CI_Controller {
 																" <br>is_empty:$is_empty
 																  <br>is_exeeded:$is_exceeded
 																  <br>max_char:$maxchars
-																  <br>char len:".strlen($datacell)."";
+																  <br>char len: ".strlen($datacell).
+																  "<br>RegX pattern: $regexpattern
+																  <br>RegX result: $regx_result";
 							}else{
 								
 								$new_data_array[$row_no][$data_col_index] = $datacell;//
@@ -722,9 +730,12 @@ class ExcelUploader extends CI_Controller {
 		
 		}
 		
-		if($empty_cell_count > 10){
+		if($empty_cell_count > 500){
 			
-			$this->session->set_flashdata('error',"This file contains too many empty values for required column(s)<br>Please fix the issue, go back, then re upload");
+			$err_msg .= "<br><b>This file contains too many empty values for required column(s) 
+													Please edit the file and then re upload</b>";
+			
+			$this->session->set_flashdata('error',$err_msg);
 							
 			//redirect('ExcelUploader/index', 'Location');
 			
@@ -739,7 +750,15 @@ class ExcelUploader extends CI_Controller {
 		
 		$data = $this->rip_tags($data);
 		
-		if($data === ""){return true;}else{return false;}
+		if($data === ""){
+			
+			return 'Y';
+		
+		}else{
+			
+			return 'N';
+		
+		}
 		
 	}//end of function
 	
@@ -771,7 +790,16 @@ class ExcelUploader extends CI_Controller {
 	
 	}
 	
-	
+	/**
+	 * is_exceeded()
+	 * 
+	 * This function checks supplied text exeeds given max charactor limit 
+	 * and return true or false
+	 * 
+	 * @param string $str
+	 * @param unknown $max
+	 * @return string
+	 */
 	private function is_exceeded($str,$max){
 		
 		$str = $this->rip_tags($str);
@@ -1175,6 +1203,156 @@ class ExcelUploader extends CI_Controller {
 		exit;
 	}
 	
+	
+	public function upload_shipment(){
+		
+		$CLIENTINFO = array(
+						'CodeStation'=>'KWI',
+						'Password'=>'shr',
+						'ShipperAccount'=>'Test7474',
+						'UserName'=>'shareefsh'
+				);
+		
+		$BATCHSHIPMENTS[] = array(									
+								'Address'=>'kuwait city',
+								'AirwayBillNo'=>'',
+								'COD' => '100',
+								'CODCurrencyCode'=>'KWD',
+								'COGCurrencyCode' => 'KWD',
+								'Calling'=> '',
+								'Company'=>'home',
+								'ConsigneeAreaCode'=>'AREA71',
+								'ConsigneeCityCode'=>'CITY24051',
+								'ConsigneeCountryCode'=>'KWT',
+								'ConsigneeName'=>'Roshan uploader',
+								'ConsigneePincode'=>'123',
+								'ConsigneeProvinceCode'=>'KW',
+								'CostOfGoods'=>'5000',
+								'DeliveryDate'=>'2016-11-11',
+								'DeliveryTime'=>'00:00-02:00',
+								'Description1'=>'This is a test upload 1 ',
+								'Description2'=>'desc 2 from upload',
+								'DestinationStation'=>'KWI',
+								'Email1'=>'test@mail.com',
+								'Email2'=>'test@mail.com',
+								'Insured'=>'Y',
+								'JCSNo'=>'',
+								'Note1'=>'test1',
+								'Note2'=>'test1',
+								'Note3'=>'test1',
+								'Note4'=>'test1',
+								'Note5'=>'test1',
+								'Note6'=>'test1',
+								'Phone5'=>'1111111',
+								'Phone6'=>'2222',
+								'PickupNumber'=>'44',
+								'Pieces'=>'1',
+								'Reference1'=>'test1',
+								'Reference2'=>'test1',
+								'RequestSequence'=>'1',
+								'RoundTrip'=>'N',
+								'ServiceCode'=>'SRV6',
+								'ShipmentTypeCode'=>'SHPT1',
+								'SourceStation'=>'KWI',
+								'SupplierCode'=>'',
+								'TelHomePhone2'=>'123456',
+								'TelMobilePhone1'=>'123456',
+								'TelWorkPhone4'=>'12345678',
+								'ValidID'=>'123456',
+								'Weight'=>'12',
+								'WhatsAppPhone3'=>'123456'						
+								);
+		
+		
+		$parameters1 =array(				
+				'CLIENTINFO'=>$CLIENTINFO,
+				'BatchShpt'=>$BATCHSHIPMENTS	
+				);
+		
+		try {
+		
+			$client = new SoapClient("http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl",
+					array('trace' => 1));
+			
+			$result = $client->BatchShipments3($parameters1);
+			
+			//echo "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
+			//echo "<pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";
+			
+			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
+			
+			if(count($shipment_upload_responce)>1){
+					
+				foreach($shipment_upload_responce as $result){
+			
+					$response_msg = $result->ResponseMessage;
+					$error_msg = $result->ErrorMessage;
+					$RequestSequence = $result->RequestSequence;
+					$connote = $result->Connote;
+			
+					echo "<hr><br>responce msg: $response_msg, error msg: $error_msg, requence seq: $RequestSequence, connote: $connote";
+				}
+					
+			}else{				
+				
+				//var_dump($shipment_upload_responce);
+				/*object(stdClass)#111 (4) { ["Connote"]=> string(12) "100000352763" ["ErrorMessage"]=> string(14) "PICKUPNOTFOUND"
+				 * ["RequestSequence"]=> string(1) "1"["ResponseMessage"]=> string(6) "FAILED" }*/
+				
+				$response_msg = $shipment_upload_responce->ResponseMessage;
+					
+				$error_msg = $shipment_upload_responce->ErrorMessage;
+					
+				$RequestSequence = $shipment_upload_responce->RequestSequence;
+					
+				$connote = $shipment_upload_responce->Connote;
+					
+				echo "<hr><br>responce msg: $response_msg, error msg: $error_msg, requence seq: $RequestSequence, connote: $connote";					
+			}
+		
+		} catch (SoapFault $fault) {
+			
+			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
+			echo 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
+		}
+		
+		
+
+		/*
+		require_once APPPATH."/third_party/SOAP/lib/nusoap.php";
+		$client = new nusoap_client(
+				'http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl', 
+				'wsdl'				
+				);
+		
+		$err = $client->getError();		
+		if ($err) {
+			echo '<h2>Constructor error</h2><pre>' . $err . '</pre>';
+			echo '<h2>Debug</h2><pre>' . htmlspecialchars($client->getDebug(), ENT_QUOTES) . '</pre>';
+			exit();
+		}		
+		$client->setUseCurl($useCURL);			
+		$client->soap_defencoding = 'UTF-8';				
+		$result = $client->call('BatchShipments',  array('parameters'=>$parameters1), '', '', false, false);
+		if ($client->fault) {
+			echo '<h2>Fault (Expect - The request contains an invalid SOAP body)</h2><pre>'; print_r($result); echo '</pre>';
+		} else {
+			$err = $client->getError();
+			if ($err) {
+				echo '<h2>Error</h2><pre>' . $err . '</pre>';
+			} else {
+				echo '<h2>Result</h2><pre>'; print_r($result); echo '</pre>';
+			}
+		}	
+		echo '<h2>Request</h2><pre>' . htmlspecialchars($client->request, ENT_QUOTES) . '</pre>';
+		echo '<h2>Response</h2><pre>' . htmlspecialchars($client->response, ENT_QUOTES) . '</pre>';
+		echo '<h2>Debug</h2><pre>' . htmlspecialchars($client->getDebug(), ENT_QUOTES) . '</pre>';
+		*/
+		
+		
+		
+		
+	}//end of funtion
 	
 	
 	public function create_template(){
