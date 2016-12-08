@@ -528,7 +528,11 @@ class ExcelUploader extends CI_Controller {
 							
 						$is_exceeded = $this->is_exceeded($chk_string,$maxchars);
 						
+						
+						//$pattern = '/' . preg_quote($regexpattern, '/') . '/';
+						
 						$regx_result= preg_match("/".$regexpattern."/" , $chk_string );
+						
 							
 						if($debug){
 								
