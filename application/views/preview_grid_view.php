@@ -24,7 +24,7 @@ textarea{width:100%; height:100%;}
 		<form method="post" action="<?php echo site_url("ExcelUploader/wizard")?>">
 			<table class="table table-bordered table table-hover">		    
 		    <?php 
-		    //echo '<pre>';var_dump($all_fields_list);exit;
+		     //echo '<pre>';var_dump($mapped_data_array);exit;
 		     echo '<thead>';
 		     echo '<tr class="info">';
 		     echo '<th>Excel Row #</th>';		     
