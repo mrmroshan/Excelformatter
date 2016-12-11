@@ -228,23 +228,35 @@ class ExcelUploader extends CI_Controller {
 		if(isset($post_data['btnUploadGrid'])){
 			
 			//$this->dump_data($post_data);
-			$grid_array = $post_data['grid'];
 			
-			$previous_grid_data_array = $this->get_mapped_data_array_from_session();
+			//check if any corrected data is sent back to the server. If found update data arrray and 
+			//proceed to display on the grid after validation. If not then proceed to upload with stroed
+			//sesshion data
 			
-			//assign submitted grid data to previous grid data array
-		
-			foreach($grid_array as $row => $cols){
+			if(isset($post_data['grid'])){
 				
-				foreach($cols as $k=>$v){
+				$grid_array = $post_data['grid'];
 					
-					$previous_grid_data_array[$row][$k] = $grid_array[$row][$k];
-				}				
-			}
-			
-			$mapped_data_array = $previous_grid_data_array;
-			
-			$this->set_mapped_data_array_in_session($mapped_data_array);
+				$previous_grid_data_array = $this->get_mapped_data_array_from_session();
+					
+				//assign submitted grid data to previous grid data array
+				
+				foreach($grid_array as $row => $cols){
+				
+					foreach($cols as $k=>$v){
+							
+						$previous_grid_data_array[$row][$k] = $grid_array[$row][$k];
+					}
+				}
+					
+				$mapped_data_array = $previous_grid_data_array;
+					
+				$this->set_mapped_data_array_in_session($mapped_data_array);
+				
+			}else{
+				
+				$mapped_data_array = $this->get_mapped_data_array_from_session();
+			}		
 			
 		}else{			
 			
@@ -531,7 +543,7 @@ class ExcelUploader extends CI_Controller {
 						
 						//$pattern = '/' . preg_quote($regexpattern, '/') . '/';
 						
-						$regx_result= preg_match("/".$regexpattern."/" , $chk_string );
+						$regx_result= @preg_match("/".$regexpattern."/" , $chk_string );
 						
 							
 						if($debug){
@@ -569,6 +581,23 @@ class ExcelUploader extends CI_Controller {
 									$datacell = '<div class="err_empty">
 													<textarea name="grid['.$row_no.']['.$col_index.']" cols="10" rows="2">'.
 																			$chk_string.'</textarea></div>';
+									
+									if(!empty($regexpattern)){
+											
+										if($regx_result === 0 ){
+												
+											$chk_string = $this->rip_tags($chk_string);
+											
+											$invalid_data_col_names[$mapped_col_info['FIELD_INDEX']] = $mapped_col_info['FIELD_LABEL'];
+												
+											$datacell = '<div class="err_invalid_data">
+														<textarea name="grid['.$row_no.']['.$col_index.']" cols="10" rows="2">'.
+														$chk_string.
+														'</textarea></div>';
+																									
+										}//end if
+									
+									}//end if
 																				
 									$empty_cell_count++;
 								}//end if
