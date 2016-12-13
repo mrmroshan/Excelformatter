@@ -9,6 +9,7 @@ class ExcelUploader_model extends CI_Model {
         {
                 // Call the CI_Model constructor
                 parent::__construct();
+                //$oracle_db=$this->load->database('default',true);
         }
 
         public function get_all_field_info(){

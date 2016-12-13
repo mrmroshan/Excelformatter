@@ -1,5 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+
+ini_set('max_execution_time', 300);
+
 /**
  * This is the controller which does the wizard type template creation and data mapping
  * for excel sheets
@@ -28,6 +31,8 @@ class ExcelUploader extends CI_Controller {
 		$this->load->library('excel');
 		//$this->load->library('SOAPClient_lib');
 		$this->load->model('ExcelUploader_model');
+		
+		
 		
 		
 
@@ -256,6 +261,10 @@ class ExcelUploader extends CI_Controller {
 			}else{
 				
 				$mapped_data_array = $this->get_mapped_data_array_from_session();
+				
+				$this->upload_shipment($mapped_data_array);
+				
+				return;
 			}		
 			
 		}else{			
@@ -311,7 +320,7 @@ class ExcelUploader extends CI_Controller {
 				
 				//$this->dump_data($mapped_cols_array);
 				
-				if(!empty($col) && $col !== ''){
+				if( $col !== ''){
 		
 					//remove hidden controller chars
 						
@@ -479,11 +488,11 @@ class ExcelUploader extends CI_Controller {
 	
 	private function validate_uploaded_data_array($data_array){
 		
-		$debug = true;
+		$debug = false;
 		
 		//$this->dump_data($data_array);
 		
-		$all_field_list_multy_array = $this->get_all_fields_array();				
+		//$all_field_list_multy_array = $this->get_all_fields_array();				
 			
 		$row_no = 1;
 		
@@ -498,8 +507,6 @@ class ExcelUploader extends CI_Controller {
 		foreach($data_array as $datarows=>$datacolls){
 			
 			//$this->dump_data($datacolls);
-			
-			$data_col_index = 0;//for each row 
 			
 			$empty_cell_count = 0;
 			
@@ -643,9 +650,7 @@ class ExcelUploader extends CI_Controller {
 					
 					$new_data_array[$row_no][$col_index] = $datacell;
 					
-				}
-				
-				$data_col_index++;
+				}				
 				
 			}//end foreach
 			
@@ -885,9 +890,11 @@ class ExcelUploader extends CI_Controller {
 				
 			for ($col = 0; $col <= $highestColumnIndex; ++$col) {
 	
-				$cell_value =  $objWorksheet->getCellByColumnAndRow($col, $row)->getValue() ;
+				//$cell_value =  $objWorksheet->getCellByColumnAndRow($col, $row)->getValue() ;
+				$cell_value =  $objWorksheet->getCellByColumnAndRow($col, $row)->getFormattedValue() ;
 					
 				$excel_data_array[$row][$col] = $cell_value;
+				//$cell->getFormattedValue()
 					
 			}//end for each
 				
@@ -1015,7 +1022,8 @@ class ExcelUploader extends CI_Controller {
 									'REGXPATTERN' => $row['REGXPATTERN'],
 									'MAXCHARS' => $row['MAXCHARS'],
 									'PRECHKFIELDS' => $row['PRECHKFIELDS'],
-									'SOAP_FIELD' => $row['SOAP_FIELD']
+									'SOAP_FIELD' => $row['SOAP_FIELD'],
+									'DATATYPE' => $row['DATATYPE']
 											);
 		}
 		//$this->dump_data($fields);
@@ -1129,79 +1137,134 @@ class ExcelUploader extends CI_Controller {
 	}
 	
 	
-	public function upload_shipment(){
+	public function upload_shipment($data_array){
 		
+		$data['output'] = null;
+		
+		//$this->dump_data($data_array);		
+		
+		$i = 0;
+		
+		foreach($data_array as $datarows=>$datacolls){			
+			
+			//$BATCHSHIPMENTS['BATCHSHIPMENTS'] = array();
+			
+			$fields = array();
+			
+			foreach($datacolls as $col_index => $datacell){
+				
+				$mapped_col_info = $this->get_mapped_col_info($col_index);
+				
+				//$this->dump_data($mapped_col_info);
+				
+				//if($i>0) {
+					if($mapped_col_info['DATATYPE'] == 'DATE'){
+												
+						$datacell = date("Y-m-d", strtotime($datacell));
+						
+						//$this->dump_data($datacell);					   
+					}
+					$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
+					
+				//}
+				
+			}//end foreach	
+			
+			 ksort($fields);
+			 
+			$BATCHSHIPMENTS[$i] = $fields;			
+			
+			$i++;
+			
+		}//end foreach
+		
+		array_shift($BATCHSHIPMENTS);//remove first elemtn and keys from the array
+		
+		//$this->dump_data($BATCHSHIPMENTS);			
+				
+		$BATCHSHIPMENTS[] = array(
+				'Address'=>'kuwait city',
+				'AirwayBillNo'=>'',
+				'COD' => '100',
+				'CODCurrencyCode'=>'KWD',
+				'COGCurrencyCode' => 'KWD',
+				'Calling'=> '',
+				'Company'=>'home',
+				'ConsigneeAreaCode'=>'AREA71',
+				'ConsigneeCityCode'=>'CITY24051',
+				'ConsigneeCountryCode'=>'KWT',
+				'ConsigneeName'=>'Roshan uploader',
+				'ConsigneePincode'=>'123',
+				'ConsigneeProvinceCode'=>'KW',
+				'CostOfGoods'=>'5000',
+				'DeliveryDate'=>'2016-11-11',
+				'DeliveryTime'=>'00:00-02:00',
+				'Description1'=>'This is a test upload 1 ',
+				'Description2'=>'desc 2 from upload',
+				'DestinationStation'=>'KWI',
+				'Email1'=>'test@mail.com',
+				'Email2'=>'test@mail.com',
+				'Insured'=>'Y',
+				'JCSNo'=>'',
+				'Note1'=>'test1',
+				'Note2'=>'test1',
+				'Note3'=>'test1',
+				'Note4'=>'test1',
+				'Note5'=>'test1',
+				'Note6'=>'test1',
+				'Phone5'=>'1111111',
+				'Phone6'=>'2222',
+				'PickupNumber'=>'R20016/1234',
+				'Pieces'=>'1',
+				'Reference1'=>'test1',
+				'Reference2'=>'test1',
+				'RequestSequence'=>'1',
+				'RoundTrip'=>'N',
+				'ServiceCode'=>'SRV6',
+				'ShipmentTypeCode'=>'SHPT1',
+				'SourceStation'=>'KWI',
+				'SupplierCode'=>'',
+				'TelHomePhone2'=>'123456',
+				'TelMobilePhone1'=>'123456',
+				'TelWorkPhone4'=>'12345678',
+				'ValidID'=>'123456',
+				'Weight'=>'12',
+				'WhatsAppPhone3'=>'123456'
+		);		
+				
 		$CLIENTINFO = array(
-						'CodeStation'=>'KWI',
-						'Password'=>'shr',
-						'ShipperAccount'=>'Test7474',
-						'UserName'=>'shareefsh'
-				);
+				'CodeStation'=>'KWI',
+				'Password'=>'shr',
+				'ShipperAccount'=>'Test7474',
+				'UserName'=>'shareefsh'
+		);
 		
-		$BATCHSHIPMENTS[] = array(									
-								'Address'=>'kuwait city',
-								'AirwayBillNo'=>'',
-								'COD' => '100',
-								'CODCurrencyCode'=>'KWD',
-								'COGCurrencyCode' => 'KWD',
-								'Calling'=> '',
-								'Company'=>'home',
-								'ConsigneeAreaCode'=>'AREA71',
-								'ConsigneeCityCode'=>'CITY24051',
-								'ConsigneeCountryCode'=>'KWT',
-								'ConsigneeName'=>'Roshan uploader',
-								'ConsigneePincode'=>'123',
-								'ConsigneeProvinceCode'=>'KW',
-								'CostOfGoods'=>'5000',
-								'DeliveryDate'=>'2016-11-11',
-								'DeliveryTime'=>'00:00-02:00',
-								'Description1'=>'This is a test upload 1 ',
-								'Description2'=>'desc 2 from upload',
-								'DestinationStation'=>'KWI',
-								'Email1'=>'test@mail.com',
-								'Email2'=>'test@mail.com',
-								'Insured'=>'Y',
-								'JCSNo'=>'',
-								'Note1'=>'test1',
-								'Note2'=>'test1',
-								'Note3'=>'test1',
-								'Note4'=>'test1',
-								'Note5'=>'test1',
-								'Note6'=>'test1',
-								'Phone5'=>'1111111',
-								'Phone6'=>'2222',
-								'PickupNumber'=>'44',
-								'Pieces'=>'1',
-								'Reference1'=>'test1',
-								'Reference2'=>'test1',
-								'RequestSequence'=>'1',
-								'RoundTrip'=>'N',
-								'ServiceCode'=>'SRV6',
-								'ShipmentTypeCode'=>'SHPT1',
-								'SourceStation'=>'KWI',
-								'SupplierCode'=>'',
-								'TelHomePhone2'=>'123456',
-								'TelMobilePhone1'=>'123456',
-								'TelWorkPhone4'=>'12345678',
-								'ValidID'=>'123456',
-								'Weight'=>'12',
-								'WhatsAppPhone3'=>'123456'						
-								);		
+		//$this->dump_data($BATCHSHIPMENTS);
 		
 		$parameters1 =array(				
 				'CLIENTINFO'=>$CLIENTINFO,
 				'BatchShpt'=>$BATCHSHIPMENTS	
 				);
 		
-		try {
+		//$this->dump_data($parameters1);
 		
-			$client = new SoapClient("http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl",
-					array('trace' => 1));
+		try {
 			
-			$result = $client->BatchShipments3($parameters1);
+			//
+			//"http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl"
+			$client = new SoapClient("http://168.187.136.18:8080/APIService/PostaWebClient.svc?wsdl",
+					array('trace' => 1,
+						  'soap_version'   => SOAP_1_1,
+						  'style' => SOAP_DOCUMENT,
+						  'encoding' => SOAP_LITERAL,
+						  'cache_wsdl' => WSDL_CACHE_NONE
+					));
 			
-			//echo "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
-			//echo "<pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";
+			$result = $client->BatchShipments($parameters1);
+			
+			$data['output'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
+			
+			$data['output'] .=  "<br><pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";//htmlentities(
 			
 			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
 			
@@ -1214,13 +1277,18 @@ class ExcelUploader extends CI_Controller {
 					$RequestSequence = $result->RequestSequence;
 					$connote = $result->Connote;
 			
-					echo "<hr><br>responce msg: $response_msg, error msg: $error_msg, requence seq: $RequestSequence, connote: $connote";
+					$data['output'] .= "<hr><br>
+					responce msg: $response_msg, 
+					error msg: $error_msg, 
+					requence seq: $RequestSequence, 
+					connote: $connote";
 				}
 					
 			}else{				
 				
 				//var_dump($shipment_upload_responce);
-				/*object(stdClass)#111 (4) { ["Connote"]=> string(12) "100000352763" ["ErrorMessage"]=> string(14) "PICKUPNOTFOUND"
+				/*object(stdClass)#111 (4) { ["Connote"]=> string(12) "100000352763" 
+				 * ["ErrorMessage"]=> string(14) "PICKUPNOTFOUND"
 				 * ["RequestSequence"]=> string(1) "1"["ResponseMessage"]=> string(6) "FAILED" }*/
 				
 				$response_msg = $shipment_upload_responce->ResponseMessage;
@@ -1231,52 +1299,114 @@ class ExcelUploader extends CI_Controller {
 					
 				$connote = $shipment_upload_responce->Connote;
 					
-				echo "<hr><br>responce msg: $response_msg, error msg: $error_msg, requence seq: $RequestSequence, connote: $connote";					
+				$data['output'] .= "<hr><br>
+				responce msg: $response_msg, 
+				error msg: $error_msg, 
+				requence seq: $RequestSequence, 
+				connote: $connote";					
 			}
 		
 		} catch (SoapFault $fault) {
 			
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-			echo 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
+			$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
 		}
 		
 		
 
-		/*
-		require_once APPPATH."/third_party/SOAP/lib/nusoap.php";
-		$client = new nusoap_client(
-				'http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl', 
-				'wsdl'				
-				);
-		
-		$err = $client->getError();		
-		if ($err) {
-			echo '<h2>Constructor error</h2><pre>' . $err . '</pre>';
-			echo '<h2>Debug</h2><pre>' . htmlspecialchars($client->getDebug(), ENT_QUOTES) . '</pre>';
-			exit();
-		}		
-		$client->setUseCurl($useCURL);			
-		$client->soap_defencoding = 'UTF-8';				
-		$result = $client->call('BatchShipments',  array('parameters'=>$parameters1), '', '', false, false);
-		if ($client->fault) {
-			echo '<h2>Fault (Expect - The request contains an invalid SOAP body)</h2><pre>'; print_r($result); echo '</pre>';
-		} else {
-			$err = $client->getError();
-			if ($err) {
-				echo '<h2>Error</h2><pre>' . $err . '</pre>';
-			} else {
-				echo '<h2>Result</h2><pre>'; print_r($result); echo '</pre>';
-			}
-		}	
-		echo '<h2>Request</h2><pre>' . htmlspecialchars($client->request, ENT_QUOTES) . '</pre>';
-		echo '<h2>Response</h2><pre>' . htmlspecialchars($client->response, ENT_QUOTES) . '</pre>';
-		echo '<h2>Debug</h2><pre>' . htmlspecialchars($client->getDebug(), ENT_QUOTES) . '</pre>';
-		*/
-		
-		
-		
+		$this->load->view('soap_request_responce_view', $data);
 		
 	}//end of funtion
+	
+	
+	
+	
+	private function test_data(){
+		
+		$BATCHSHIPMENTS[] = array(
+				'Address'=>'kuwait city',
+				'AirwayBillNo'=>'',
+				'COD' => '100',
+				'CODCurrencyCode'=>'KWD',
+				'COGCurrencyCode' => 'KWD',
+				'Calling'=> '',
+				'Company'=>'home',
+				'ConsigneeAreaCode'=>'AREA71',
+				'ConsigneeCityCode'=>'CITY24051',
+				'ConsigneeCountryCode'=>'KWT',
+				'ConsigneeName'=>'Roshan uploader',
+				'ConsigneePincode'=>'123',
+				'ConsigneeProvinceCode'=>'KW',
+				'CostOfGoods'=>'5000',
+				'DeliveryDate'=>'2016-11-11',
+				'DeliveryTime'=>'00:00-02:00',
+				'Description1'=>'This is a test upload 1 ',
+				'Description2'=>'desc 2 from upload',
+				'DestinationStation'=>'KWI',
+				'Email1'=>'test@mail.com',
+				'Email2'=>'test@mail.com',
+				'Insured'=>'Y',
+				'JCSNo'=>'',
+				'Note1'=>'test1',
+				'Note2'=>'test1',
+				'Note3'=>'test1',
+				'Note4'=>'test1',
+				'Note5'=>'test1',
+				'Note6'=>'test1',
+				'Phone5'=>'1111111',
+				'Phone6'=>'2222',
+				'PickupNumber'=>'44',
+				'Pieces'=>'1',
+				'Reference1'=>'test1',
+				'Reference2'=>'test1',
+				'RequestSequence'=>'1',
+				'RoundTrip'=>'N',
+				'ServiceCode'=>'SRV6',
+				'ShipmentTypeCode'=>'SHPT1',
+				'SourceStation'=>'KWI',
+				'SupplierCode'=>'',
+				'TelHomePhone2'=>'123456',
+				'TelMobilePhone1'=>'123456',
+				'TelWorkPhone4'=>'12345678',
+				'ValidID'=>'123456',
+				'Weight'=>'12',
+				'WhatsAppPhone3'=>'123456'
+		);
+		
+		
+		/*
+		 require_once APPPATH."/third_party/SOAP/lib/nusoap.php";
+		 $client = new nusoap_client(
+		 'http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl',
+		 'wsdl'
+		 );
+		
+		 $err = $client->getError();
+		 if ($err) {
+		 echo '<h2>Constructor error</h2><pre>' . $err . '</pre>';
+		 echo '<h2>Debug</h2><pre>' . htmlspecialchars($client->getDebug(), ENT_QUOTES) . '</pre>';
+		 exit();
+		 }
+		 $client->setUseCurl($useCURL);
+		 $client->soap_defencoding = 'UTF-8';
+		 $result = $client->call('BatchShipments',  array('parameters'=>$parameters1), '', '', false, false);
+		 if ($client->fault) {
+		 echo '<h2>Fault (Expect - The request contains an invalid SOAP body)</h2><pre>'; print_r($result); echo '</pre>';
+		 } else {
+		 $err = $client->getError();
+		 if ($err) {
+		 echo '<h2>Error</h2><pre>' . $err . '</pre>';
+		 } else {
+		 echo '<h2>Result</h2><pre>'; print_r($result); echo '</pre>';
+		 }
+		 }
+		 echo '<h2>Request</h2><pre>' . htmlspecialchars($client->request, ENT_QUOTES) . '</pre>';
+		 echo '<h2>Response</h2><pre>' . htmlspecialchars($client->response, ENT_QUOTES) . '</pre>';
+		 echo '<h2>Debug</h2><pre>' . htmlspecialchars($client->getDebug(), ENT_QUOTES) . '</pre>';
+		 */
+		
+	}//end of test data
+	
 	
 	
 	public function create_template(){

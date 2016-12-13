@@ -6,6 +6,7 @@ include("header.php")
 .err_empty{border: solid red 5px;width:100px;height:50px;}
 .err_invalid_data{border: solid black 5px;width:100px;height:50px;}
 textarea{width:100%; height:100%;}
+td{min-width: 100px;}
 </style>
 <div class="container">
 <div class="row">

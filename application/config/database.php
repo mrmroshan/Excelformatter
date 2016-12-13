@@ -73,13 +73,26 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+//"SERVER=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=10.53.6.14)(PORT=1521))
+//(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=erplive)));uid=ERP;pwd=erp;"
+
+$hostname = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=10.53.6.14)(PORT=1521))
+		(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=erplive)))";
+$dns = 'oci:dbname=(DESCRIPTION =
+                (ADDRESS = (PROTOCOL = TCP)(HOST = 10.53.6.14)(PORT = 1521))
+                (CONNECT_DATA =
+                  (SERVER = DEDICATED)
+                  (SERVICE_NAME = erplive)
+                )
+              )';
+
 $db['default'] = array(
-	'dsn'	=> '',
+	'dsn'	=> '',//$dns,
 	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'shipment_uploader',
-	'dbdriver' => 'mysqli',
+	'username' => 'root',//ERP',//'',
+	'password' => '',//erp',
+	'database' => 'shipment_uploader',//./application/db/data.db',//
+	'dbdriver' => 'mysqli',//pdo',//oci8',//mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
 	'db_debug' => (ENVIRONMENT !== 'production'),
