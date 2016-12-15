@@ -408,6 +408,8 @@ class ExcelUploader extends CI_Controller {
 			
 		$mapped_cols_array = array();
 		
+		$mapped_field_name = null;
+		
 		foreach($post_data as $field=>$value){
 			
 			$field_id_array = array();
@@ -416,8 +418,11 @@ class ExcelUploader extends CI_Controller {
 								
 				$field_id_array = explode("-",$field); // array(2) { [0]=> string(1) "2" [1]=> string(11) "Airway_Bill" }
 				
-				//var_dump($field_id_array);exit;
-				
+				if($value !== ''){
+					
+					$this->store_mapped_fields($field_id_array,$value);						
+				}
+																
 				$$field = $value;	//make element name as variable.
 				
 				$mapped_cols_array[$field_id_array[0]] = $$field;
@@ -435,6 +440,57 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
+	private function store_mapped_fields($field_data,$column_index){
+		
+		//var_dump($field_data);exit;
+		$field_id = $field_data[0];
+		
+		$column_list_array = $this->get_uploaded_file_col_list();
+		
+		//$this->dump_data($column_list_array);
+		
+		//$mapped_col_name = str_replace("_", " ", $field_data[1]);
+		
+		$mapped_col_name = $column_list_array[$column_index]; 
+		
+		$existing_fields_list_str = $this->get_mapped_col_info($field_id);
+		
+		$existing_fields_list_array = explode("|", $existing_fields_list_str['MAPPED_COL_NAMES']);
+		
+		if(empty(end($existing_fields_list_array))){
+			
+			array_pop($existing_fields_list_array);
+		}	
+		
+		//check if its already existing
+		
+		if(in_array($mapped_col_name,$existing_fields_list_array)){
+			
+			return;
+		}
+		
+		//$this->dump_data($existing_fields_list_array);
+		
+		if(!empty($existing_fields_list_str['MAPPED_COL_NAMES'])){
+			
+			$existing_fields_list_str = $existing_fields_list_str['MAPPED_COL_NAMES'] .'|'.trim($mapped_col_name);
+			
+		}else{
+			
+			$existing_fields_list_str = trim($mapped_col_name);			
+		}
+		
+		
+		$status = $this->ExcelUploader_model->update_entry(
+					array('MAPPED_COL_NAMES' => $existing_fields_list_str,
+						  'FIELD_ID' => $field_id)
+				);
+		
+		//$this->dump_data($status);
+		
+		//exit;
+		
+	}//end of function
 	
 	
 	/**
@@ -1038,7 +1094,8 @@ class ExcelUploader extends CI_Controller {
 									'MAXCHARS' => $row['MAXCHARS'],
 									'PRECHKFIELDS' => $row['PRECHKFIELDS'],
 									'SOAP_FIELD' => $row['SOAP_FIELD'],
-									'DATATYPE' => $row['DATATYPE']
+									'DATATYPE' => $row['DATATYPE'],
+									'MAPPED_COL_NAMES' => $row['MAPPED_COL_NAMES']
 											);
 		}
 		//$this->dump_data($fields);

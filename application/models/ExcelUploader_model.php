@@ -1,9 +1,9 @@
 <?php
 class ExcelUploader_model extends CI_Model {
 
-        public $title;
-        public $content;
-        public $date;
+        //public $title;
+        //public $content;
+        //public $date;
 
         public function __construct()
         {
@@ -25,26 +25,28 @@ class ExcelUploader_model extends CI_Model {
 
         public function get_last_ten_entries()
         {
-                $query = $this->db->get('entries', 10);
-                return $query->result();
+                /*$query = $this->db->get('entries', 10);
+                return $query->result();*/
         }
 
         public function insert_entry()
         {
-                $this->title    = $_POST['title']; // please read the below note
+                /*$this->title    = $_POST['title']; // please read the below note
                 $this->content  = $_POST['content'];
                 $this->date     = time();
 
-                $this->db->insert('entries', $this);
+                $this->db->insert('entries', $this);*/
         }
 
-        public function update_entry()
+        public function update_entry($data_array)
         {
-                $this->title    = $_POST['title'];
-                $this->content  = $_POST['content'];
-                $this->date     = time();
-
-                $this->db->update('entries', $this, array('id' => $_POST['id']));
+               $this->MAPPED_COL_NAMES    = $data_array['MAPPED_COL_NAMES'];
+                               
+               $status =  $this->db->update('field_list', $this, array(
+                		'FIELD_ID' => $data_array['FIELD_ID'])
+                		);
+               
+               return $status;
         }
 
 }

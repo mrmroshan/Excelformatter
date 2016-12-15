@@ -47,7 +47,10 @@ include("header.php")
 							    $i = 0;
 							    foreach($up_file_col_list as $col_list){
 							    	
-							    	if( strpos( strtoupper(trim($k1['FIELD_LABEL'])), strtoupper(trim($col_list)) ) !== false ) {
+							    	$mapped_fields_array = explode("|", $k1['MAPPED_COL_NAMES']);
+							    	//var_dump($mapped_fields_array);exit;
+							    	
+							    	if( in_array( trim($col_list),$mapped_fields_array ) ) {
 							    		echo '<option value="'.$i.'" selected="selected">'.$col_list.'</option>';
 							    	}else{
 							    		echo '<option value="'.$i.'"  >'.$col_list.'</option>';
