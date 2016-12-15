@@ -101,9 +101,29 @@ $(document).ready(function() {
 
 	var json_data = <?php echo $json_data_array;?>
 
-	if(debug) console.log('array count:'+ json_data.length);
+	var req_no = <?php echo $req_no?>
+
+	//if(debug) console.log('array count:'+ json_data.length);
 
 	var i = 0;
+
+	for(var n=1; n <= req_no; n++){
+		
+		console.log( 'req_np:'+ n);
+
+		$.ajax({	
+			  
+			  url: "<?php echo site_url('ExcelUploader/ajax_create_shipment?sequence=')?>"+n,
+
+			  async: false,
+			   
+			  success: function(result){
+				  
+		        //$("#div1").html(result);		        
+			        console.log('result:'+ result);
+		    }});
+	}
+	
 	
 	$.each( json_data, function( key, value ) {
 		
@@ -111,7 +131,7 @@ $(document).ready(function() {
 
 		  $.each(value, function (k, v){
 			  
-			  console.log(k+": "+v);
+			  //console.log(k+": "+v);
 			  					  
 		  });
 
@@ -128,7 +148,7 @@ $(document).ready(function() {
 			
 		 i++;
 		 
-		 console.log('No of rec:'+i); 
+		 //console.log('No of rec:'+i); 
 	});
 
 	

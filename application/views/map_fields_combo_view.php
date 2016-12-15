@@ -29,8 +29,7 @@ include("header.php")
 		    <div class="panel-heading">
 		      <h2 class="panel-title"><?php echo str_replace('_'," ",$category)?></h2>		      
 		    </div>
-		    <div class="panel-body "> 
-		     
+		    <div class="panel-body ">    
 		    
 		   	<?php 
 		   	//var_dump($fields);exit;

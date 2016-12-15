@@ -51,6 +51,8 @@ class ExcelUploader extends CI_Controller {
 
 	}//end of function
 	
+	
+	
 	public function unset_sessions(){
 		
 		$array_items = array('excel_data_array', 'template_col_list_array','up_file_col_list_array');		
@@ -58,6 +60,8 @@ class ExcelUploader extends CI_Controller {
 		session_destroy();
 	}
 
+	
+	
 	private function check_sessions(){
 		
 		if(empty($this->session->userdata('template_col_list_array')) and 
@@ -104,6 +108,8 @@ class ExcelUploader extends CI_Controller {
 		
 	}//end of function
 
+	
+	
 	/**
 	 * Index()
 	 * 
@@ -222,7 +228,6 @@ class ExcelUploader extends CI_Controller {
 		$this->load->view('map_fields_combo_view', $data);
 	
 	}//end of function
-	
 	
 	
 	
@@ -440,6 +445,8 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
+	
+	
 	private function store_mapped_fields($field_data,$column_index){
 		
 		//var_dump($field_data);exit;
@@ -491,6 +498,7 @@ class ExcelUploader extends CI_Controller {
 		//exit;
 		
 	}//end of function
+	
 	
 	
 	/**
@@ -551,8 +559,6 @@ class ExcelUploader extends CI_Controller {
 		//}
 		
 	}//end of function
-	
-	
 	
 	
 	
@@ -814,7 +820,6 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
 	private function is_empty_cell($data){
 		
 		$data = $this->rip_tags($data);
@@ -830,8 +835,7 @@ class ExcelUploader extends CI_Controller {
 		}
 		
 	}//end of function
-	
-	
+		
 	
 	
 	/**
@@ -860,6 +864,8 @@ class ExcelUploader extends CI_Controller {
 		return $string;
 	
 	}
+	
+	
 	
 	/**
 	 * is_exceeded()
@@ -924,6 +930,7 @@ class ExcelUploader extends CI_Controller {
 		return $data;
 		 
 	}//end of function
+	
 	
 	
 	/**
@@ -1143,6 +1150,7 @@ class ExcelUploader extends CI_Controller {
 	
 	}//end of function
 	
+	
 		
 	
 	/**
@@ -1211,9 +1219,15 @@ class ExcelUploader extends CI_Controller {
 		
 		$json_data_array = json_encode($data_array);
 		
+		//$this->dump_data(round(count($data_array)/10));
+		
+		$req_no = round(count($data_array)/10);
+		
 		//$this->dump_data($json_data_array);
 		
 		$data['json_data_array'] = $json_data_array;
+		
+		$data['req_no'] = $req_no;
 		
 		$all_fields_list = $this->get_all_fields_single_array();
 		
@@ -1223,11 +1237,145 @@ class ExcelUploader extends CI_Controller {
 		
 	}//end of function
 	
+	
+	
+	
+	
 	public function ajax_create_shipment(){
 		
-		var_dump( $_REQUEST);
+		$sequence = $this->input->get("sequence");
+		$first = ((int)$sequence*10)-9;
+		
+		$last =  ((int)$sequence* 10);
+		
+				
+		//echo 'SEQUENCE:'.$sequence;
+		
+		$data_array = $this->get_mapped_data_array_from_session();
+		
+		//var_dump($data_array);
+			
+		
+		$i = 0;
+		
+		foreach($data_array as $datarows=>$datacolls){
+				
+			//$BATCHSHIPMENTS['BATCHSHIPMENTS'] = array();
+				
+			$fields = array();
+				
+			foreach($datacolls as $col_index => $datacell){
+		
+				$mapped_col_info = $this->get_mapped_col_info($col_index);
+		
+				//$this->dump_data($mapped_col_info);
+		
+				//if($i>0) {
+				if($mapped_col_info['DATATYPE'] == 'DATE'){
+		
+					$datacell = date("Y-m-d", strtotime($datacell));
+		
+					//$this->dump_data($datacell);
+				}
+				$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
+					
+				//}
+		
+			}//end foreach
+				
+			ksort($fields);
+		
+			$BATCHSHIPMENTS[$i] = $fields;
+				
+			$i++;
+				
+		}//end foreach
+		
+		echo 'SEQUENCE:'.$sequence." first:".$first." last:".$last;
+		var_dump($BATCHSHIPMENTS);
+		
+/*
+		$CLIENTINFO = array(
+				'CodeStation'=>$this->CODESTATION,
+				'Password'=> $this->PASSWORD,
+				'ShipperAccount'=>$this->ACCOUNTNO,
+				'UserName'=>$this->USERNAME
+		);
+			
+		$parameters1 =array(
+				'CLIENTINFO'=>$CLIENTINFO,
+				'BatchShpt'=>$BATCHSHIPMENTS
+		);
+		
+		//$this->dump_data($parameters1);
+		
+		
+		try {
+				
+			//
+			//"http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl"
+			$client = new SoapClient("http://168.187.136.18:8080/APIService/PostaWebClient.svc?wsdl",
+					array('trace' => 1,
+							'soap_version'   => SOAP_1_1,
+							'style' => SOAP_DOCUMENT,
+							'encoding' => SOAP_LITERAL,
+							'cache_wsdl' => WSDL_CACHE_NONE
+					));
+				
+			$result = $client->BatchShipments($parameters1);
+				
+			$data['output'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
+				
+			$data['output'] .=  "<br><pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";//htmlentities(
+				
+			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
+				
+			if(count($shipment_upload_responce)>1){
+					
+				foreach($shipment_upload_responce as $result){
+						
+					$response_msg = $result->ResponseMessage;
+					$error_msg = $result->ErrorMessage;
+					$RequestSequence = $result->RequestSequence;
+					$connote = $result->Connote;
+						
+					$data['output'] .= "<hr><br>
+					responce msg: $response_msg,
+					error msg: $error_msg,
+					requence seq: $RequestSequence,
+					connote: $connote";
+				}
+					
+			}else{
+		
+			
+				$response_msg = $shipment_upload_responce->ResponseMessage;
+					
+				$error_msg = $shipment_upload_responce->ErrorMessage;
+					
+				$RequestSequence = $shipment_upload_responce->RequestSequence;
+					
+				$connote = $shipment_upload_responce->Connote;
+					
+				$data['output'] .= "<hr><br>
+				responce msg: $response_msg,
+				error msg: $error_msg,
+				requence seq: $RequestSequence,
+				connote: $connote";
+			}
+		
+		} catch (SoapFault $fault) {
+				
+			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
+			$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
+		}
+		*/
+		
 		
 	}//end of function
+	
+	
+	
 	
 	
 	private function dump_data($data){
@@ -1236,6 +1384,9 @@ class ExcelUploader extends CI_Controller {
 		var_dump($data);
 		exit;
 	}
+	
+	
+	
 	
 	
 	public function upload_shipment($data_array){
