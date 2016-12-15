@@ -16,7 +16,15 @@ class ExcelUploader extends CI_Controller {
 	private $debug = true;
 	
 	private $selected_col_list = null;
-			
+	
+	private $ACCOUNTNO = null;
+	
+	private $USERNAME = null;
+	
+	private $PASSWORD = null;
+	
+	private $CODESTATION = null;
+	
 	function __construct(){
 
 		parent::__construct();
@@ -32,8 +40,13 @@ class ExcelUploader extends CI_Controller {
 		//$this->load->library('SOAPClient_lib');
 		$this->load->model('ExcelUploader_model');
 		
+		$this->ACCOUNTNO = 'Test7474';
 		
+		$this->USERNAME = 'shareefsh';
 		
+		$this->PASSWORD = 'shr';
+		
+		$this->CODESTATION = 'KWI';
 		
 
 	}//end of function
@@ -262,7 +275,9 @@ class ExcelUploader extends CI_Controller {
 				
 				$mapped_data_array = $this->get_mapped_data_array_from_session();
 				
-				$this->upload_shipment($mapped_data_array);
+				//$this->upload_shipment($mapped_data_array);
+				
+				$this->export_shipment_page();
 				
 				return;
 			}		
@@ -1129,6 +1144,35 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
+	public function export_shipment_page(){
+		
+		//remove the first element, since its only column names
+		
+		$data_array = $this->get_mapped_data_array_from_session();
+		
+		array_shift($data_array);
+		
+		$json_data_array = json_encode($data_array);
+		
+		//$this->dump_data($json_data_array);
+		
+		$data['json_data_array'] = $json_data_array;
+		
+		$all_fields_list = $this->get_all_fields_single_array();
+		
+		$data['all_fields_list'] = $all_fields_list;
+		
+		$this->load->view('export_shipment_view', $data);
+		
+	}//end of function
+	
+	public function ajax_create_shipment(){
+		
+		var_dump( $_REQUEST);
+		
+	}//end of function
+	
+	
 	private function dump_data($data){
 		
 		echo '<pre>';
@@ -1181,66 +1225,15 @@ class ExcelUploader extends CI_Controller {
 		array_shift($BATCHSHIPMENTS);//remove first elemtn and keys from the array
 		
 		//$this->dump_data($BATCHSHIPMENTS);			
-				
-		$BATCHSHIPMENTS[] = array(
-				'Address'=>'kuwait city',
-				'AirwayBillNo'=>'',
-				'COD' => '100',
-				'CODCurrencyCode'=>'KWD',
-				'COGCurrencyCode' => 'KWD',
-				'Calling'=> '',
-				'Company'=>'home',
-				'ConsigneeAreaCode'=>'AREA71',
-				'ConsigneeCityCode'=>'CITY24051',
-				'ConsigneeCountryCode'=>'KWT',
-				'ConsigneeName'=>'Roshan uploader',
-				'ConsigneePincode'=>'123',
-				'ConsigneeProvinceCode'=>'KW',
-				'CostOfGoods'=>'5000',
-				'DeliveryDate'=>'2016-11-11',
-				'DeliveryTime'=>'00:00-02:00',
-				'Description1'=>'This is a test upload 1 ',
-				'Description2'=>'desc 2 from upload',
-				'DestinationStation'=>'KWI',
-				'Email1'=>'test@mail.com',
-				'Email2'=>'test@mail.com',
-				'Insured'=>'Y',
-				'JCSNo'=>'',
-				'Note1'=>'test1',
-				'Note2'=>'test1',
-				'Note3'=>'test1',
-				'Note4'=>'test1',
-				'Note5'=>'test1',
-				'Note6'=>'test1',
-				'Phone5'=>'1111111',
-				'Phone6'=>'2222',
-				'PickupNumber'=>'R20016/1234',
-				'Pieces'=>'1',
-				'Reference1'=>'test1',
-				'Reference2'=>'test1',
-				'RequestSequence'=>'1',
-				'RoundTrip'=>'N',
-				'ServiceCode'=>'SRV6',
-				'ShipmentTypeCode'=>'SHPT1',
-				'SourceStation'=>'KWI',
-				'SupplierCode'=>'',
-				'TelHomePhone2'=>'123456',
-				'TelMobilePhone1'=>'123456',
-				'TelWorkPhone4'=>'12345678',
-				'ValidID'=>'123456',
-				'Weight'=>'12',
-				'WhatsAppPhone3'=>'123456'
-		);		
+		
 				
 		$CLIENTINFO = array(
-				'CodeStation'=>'KWI',
-				'Password'=>'shr',
-				'ShipperAccount'=>'Test7474',
-				'UserName'=>'shareefsh'
+				'CodeStation'=>$this->CODESTATION,
+				'Password'=> $this->PASSWORD,
+				'ShipperAccount'=>$this->ACCOUNTNO,
+				'UserName'=>$this->USERNAME
 		);
-		
-		//$this->dump_data($BATCHSHIPMENTS);
-		
+					
 		$parameters1 =array(				
 				'CLIENTINFO'=>$CLIENTINFO,
 				'BatchShpt'=>$BATCHSHIPMENTS	
@@ -1310,12 +1303,10 @@ class ExcelUploader extends CI_Controller {
 			
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
 			$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
-		}
-		
-		
+		}	
 
 		$this->load->view('soap_request_responce_view', $data);
-		
+				
 	}//end of funtion
 	
 	
@@ -1355,7 +1346,7 @@ class ExcelUploader extends CI_Controller {
 				'Note6'=>'test1',
 				'Phone5'=>'1111111',
 				'Phone6'=>'2222',
-				'PickupNumber'=>'44',
+				'PickupNumber'=>'R20016/1234',
 				'Pieces'=>'1',
 				'Reference1'=>'test1',
 				'Reference2'=>'test1',
