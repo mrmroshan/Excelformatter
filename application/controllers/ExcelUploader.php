@@ -1229,6 +1229,8 @@ class ExcelUploader extends CI_Controller {
 		
 		$data['req_no'] = $req_no;
 		
+		$data['tot_rows'] = count($data_array);
+		
 		$all_fields_list = $this->get_all_fields_single_array();
 		
 		$data['all_fields_list'] = $all_fields_list;
@@ -1243,43 +1245,51 @@ class ExcelUploader extends CI_Controller {
 	
 	public function ajax_create_shipment(){
 		
+		$debug = true;
+		
+		$data = array('output'=>'');
+		
 		$sequence = $this->input->get("sequence");
+		
 		$first = ((int)$sequence*10)-9;
 		
 		$last =  ((int)$sequence* 10);
 		
+		$data_array = $this->get_mapped_data_array_from_session();		
 				
-		//echo 'SEQUENCE:'.$sequence;
+		//remove first column list element
 		
-		$data_array = $this->get_mapped_data_array_from_session();
+		array_shift($data_array);		
 		
-		//var_dump($data_array);
+		$offset = $first-1;
 			
+		$batch_data = array_slice($data_array,$offset,10);
+		
+		//echo 'SEQUENCE:'.$sequence." first:".$first." last:".$last;
+		
+		//var_dump($batch_data);
+		
+		//return;
 		
 		$i = 0;
 		
-		foreach($data_array as $datarows=>$datacolls){
-				
-			//$BATCHSHIPMENTS['BATCHSHIPMENTS'] = array();
-				
+		foreach($batch_data as $datarows=>$datacolls){
+										
 			$fields = array();
 				
 			foreach($datacolls as $col_index => $datacell){
 		
 				$mapped_col_info = $this->get_mapped_col_info($col_index);
 		
-				//$this->dump_data($mapped_col_info);
-		
-				//if($i>0) {
+				//$this->dump_data($mapped_col_info);		
+				
 				if($mapped_col_info['DATATYPE'] == 'DATE'){
 		
 					$datacell = date("Y-m-d", strtotime($datacell));
 		
 					//$this->dump_data($datacell);
 				}
-				$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
-					
-				//}
+				$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;				
 		
 			}//end foreach
 				
@@ -1291,10 +1301,11 @@ class ExcelUploader extends CI_Controller {
 				
 		}//end foreach
 		
-		echo 'SEQUENCE:'.$sequence." first:".$first." last:".$last;
-		var_dump($BATCHSHIPMENTS);
+		//echo 'SEQUENCE:'.$sequence." first:".$first." last:".$last;
 		
-/*
+		//var_dump($BATCHSHIPMENTS);
+		
+
 		$CLIENTINFO = array(
 				'CodeStation'=>$this->CODESTATION,
 				'Password'=> $this->PASSWORD,
@@ -1302,12 +1313,12 @@ class ExcelUploader extends CI_Controller {
 				'UserName'=>$this->USERNAME
 		);
 			
-		$parameters1 =array(
+		$parameters =array(
 				'CLIENTINFO'=>$CLIENTINFO,
 				'BatchShpt'=>$BATCHSHIPMENTS
 		);
 		
-		//$this->dump_data($parameters1);
+		//$this->dump_data($parameters);
 		
 		
 		try {
@@ -1322,16 +1333,18 @@ class ExcelUploader extends CI_Controller {
 							'cache_wsdl' => WSDL_CACHE_NONE
 					));
 				
-			$result = $client->BatchShipments($parameters1);
+			$result = $client->BatchShipments($parameters);
 				
-			$data['output'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
+			if($debug) $data['output'] .=  "<pre>REQUEST:\n" . $client->__getLastRequest() . "\n";
 				
-			$data['output'] .=  "<br><pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";//htmlentities(
+			if($debug)$data['output'] .=  "<br><pre>Response:\n" . $client->__getLastResponse() . "\n";//htmlentities(
 				
 			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
 				
 			if(count($shipment_upload_responce)>1){
-					
+				
+				$m = 0;//to align with $BATCHSHIPMENTS array sequence
+				
 				foreach($shipment_upload_responce as $result){
 						
 					$response_msg = $result->ResponseMessage;
@@ -1342,9 +1355,14 @@ class ExcelUploader extends CI_Controller {
 					$data['output'] .= "<hr><br>
 					responce msg: $response_msg,
 					error msg: $error_msg,
-					requence seq: $RequestSequence,
+					request seq: $RequestSequence,
 					connote: $connote";
-				}
+					
+					$BATCHSHIPMENTS[$m]= $this->soap_response_incorporater($result,$BATCHSHIPMENTS[$m],$m);
+						
+					$m++;
+					
+				}//end foreach
 					
 			}else{
 		
@@ -1360,22 +1378,132 @@ class ExcelUploader extends CI_Controller {
 				$data['output'] .= "<hr><br>
 				responce msg: $response_msg,
 				error msg: $error_msg,
-				requence seq: $RequestSequence,
-				connote: $connote";
-			}
+				request seq: $RequestSequence,
+				connote: $connote"; 
+				
+				$m = 0;
+				
+				$BATCHSHIPMENTS[$m] = $this->soap_response_incorporater($shipment_upload_responce,$BATCHSHIPMENTS[$m],$m);
+			}//end if
+			
+			
+			$this->set_after_SOAP_response_data_array($BATCHSHIPMENTS);
+			
+			
+			//var_dump($this->get_after_SOAP_response_data_array());
 		
 		} catch (SoapFault $fault) {
 				
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-			$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
+			if($debug)$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
 		}
-		*/
 		
+		
+		//if($debug)echo $data['output'];
+		
+		//echo $this->get_after_SOAP_response_data_array();
+		
+		echo $this->prepare_table_html($this->get_after_SOAP_response_data_array());
+		
+	}//end of function
+	
+	
+	private function prepare_table_html($data_array){
+		
+		//$tbody = '<tbody>';
+		
+		$tbody = '<tr>';
+		
+		$i=0;
+		
+		foreach($data_array as $rows){
+		
+			$tbody .= '<td>'.$i.'</td>';
+			
+			foreach($rows as $col){
+				 
+				$tbody .= "<td>".$col."</td>";
+		
+			}				
+			
+			$tbody .= '</tr>';
+			
+			//$tbody .= '</tbody>';
+			
+			$i++;
+		}//end foreach
+		
+		return $tbody;
 		
 	}//end of function
 	
 	
 	
+	private function soap_response_incorporater($soap_response,$data_row,$arr_sequence){
+		
+		//var_dump($BATCHSHIPMENTS);
+		
+		//$data_array = $this->get_mapped_data_array_from_session();
+		
+		//var_dump($data_array);exit;
+		
+		$response_msg = $soap_response->ResponseMessage;
+		
+		$error_msg = $soap_response->ErrorMessage;
+		
+		$RequestSequence = $soap_response->RequestSequence;
+		
+		$connote = $soap_response->Connote;
+		
+		if($response_msg === 'FAILED'){
+			
+			$data_row['SOAP_error']= '<div class="soap_error">'.$error_msg.'</div>';
+			
+		}else{
+			
+			$data_row['SOAP_error']= "";
+			
+		}//end if
+		
+		return $data_row;
+		
+	}//end of function
+	
+	
+	
+	
+	
+	private function set_after_SOAP_response_data_array($data_array){
+		
+		$this->session->unset_userdata('after_SOAP_data_array');
+		
+		$this->session->set_userdata('after_SOAP_data_array',$data_array);
+		
+	}//end of function
+	
+	
+	private function get_after_SOAP_response_data_array(){
+	
+		$data_array = $this->session->userdata('after_SOAP_data_array');	
+		
+		return $data_array;
+			
+	}//end of function
+	
+	
+	private function searcharray($value, $key, $array) {
+		
+		foreach ($array as $k => $val) {
+			
+			if ($val[$key] == $value) {
+				
+				return $k;
+			}
+		}
+		
+		return null;
+		
+	}//end of function
 	
 	
 	private function dump_data($data){

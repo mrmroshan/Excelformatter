@@ -32,13 +32,14 @@ td{min-width: 100px;}
             
         <hr>
         <div id="progressbar"><div class="progress-label">Loading...</div></div>
+        <div id="div1"></div>
         <br>
         
          <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
 		<div style="overflow:scroll;height:600px;width:100%"><!-- table wrapper -->
 		 
 		<!-- <form method="post" action="<?php echo site_url("ExcelUploader/wizard")?>">-->
-			<!-- <table class="table table-bordered table table-hover">		    
+			<table class="table table-bordered table table-hover" id="data_table">		    
 		    <?php 
 		     //echo '<pre>';var_dump($mapped_data_array);exit;
 		     echo '<thead>';
@@ -46,15 +47,17 @@ td{min-width: 100px;}
 		     echo '<th>Excel Row #</th>';		     
 		     foreach($all_fields_list as $index=>$field){
 		     	
-		     	echo '<th ">'.$field.'</th>';
+		     	echo '<th>'.$field.'</th>';
 		     	
 		     }//end foreach
 		     
-		     echo '</tr>';
+		     echo '<th>Error Description</th>';
+		     echo '</tr>';		     
 		     echo '</thead>';
-		     
-		     $i=1;
 		     echo '<tbody>';
+		     /*
+		     $i=1;
+		     
 		     foreach($mapped_data_array as $rows){
 		     	
 		     	echo ($i==1)? '<tr class="active">':'<tr>';
@@ -66,13 +69,13 @@ td{min-width: 100px;}
 				 }
 				 
 				 echo '</tr>';
-				 echo '</tbody>';				 
+				 			 
 				 $i++;			
 		     }//end foreach	      
-		    
+		    */
 		    ?>		     
-		  
-		  </table>-->		  
+		  </tbody>
+		  </table>		  
 		  		  
 		</div><!--/ table wrapper -->
 		<br>
@@ -103,79 +106,88 @@ $(document).ready(function() {
 
 	var req_no = <?php echo $req_no?>
 
-	//if(debug) console.log('array count:'+ json_data.length);
+	var tot_rows = <?php echo $tot_rows;?>
+
+	var percentage = 0;
+
+	if(debug) console.log('array count:'+ json_data.length);
+
+   
+    var progressbar = $( "#progressbar" );
+    var progressLabel = $( ".progress-label" );
+
+	progressbar.progressbar({
+	    value: false,
+	    change: function() {
+	      progressLabel.text( progressbar.progressbar( "value" ) + "%" );
+	    },
+	    complete: function() {
+	      progressLabel.text( "Complete!" );
+	    }
+	  });
+
+	function progress(percentage) {
+	    var val = progressbar.progressbar( "value" ) || 0;
+	
+	    progressbar.progressbar( "value", percentage );
+	
+	    if ( val < 99 ) {
+	      //setTimeout( progress, 80 );
+		      //progress;
+	    }
+	  }
+
+	progressbar.progressbar( "value", percentage )
+	
 
 	var i = 0;
-
+	
+	//progress(0);
+		
 	for(var n=1; n <= req_no; n++){
 		
-		console.log( 'req_np:'+ n);
+		if(debug)console.log( 'req_no:'+ n);
 
 		$.ajax({	
 			  
 			  url: "<?php echo site_url('ExcelUploader/ajax_create_shipment?sequence=')?>"+n,
 
-			  async: false,
+			  async: true,
 			   
 			  success: function(result){
-				  
-		        //$("#div1").html(result);		        
-			        console.log('result:'+ result);
+				  var div = $(".ui-progressbar-value");
+				  div.css.width = percentage;
+
+				//$("#div1").html(result);		
+				        
+			        if(debug)console.log('result:'+ result);
+			        
+			        if(debug)console.log('TotRows:'+tot_rows);
+			        
+			        percentage = ((n * 10 )/tot_rows)*100;
+			        
+			        if(debug)console.log('percentage:'+ percentage);
+
+			        //if(percentage<=100){
+				      //progressbar.progressbar( "value", percentage );
+				        	progress(percentage);
+				        	//$("#data_table").html(percentage+'%');
+
+				        	$("#data_table").find('tbody').append(result);
+			        //}
+		        	
+		    },
+		    complete:function(result){
+			//update(percentage);
 		    }});
-	}
-	
-	
-	$.each( json_data, function( key, value ) {
 		
-		  //console.log( key + ": " + value );
-
-		  $.each(value, function (k, v){
-			  
-			  //console.log(k+": "+v);
-			  					  
-		  });
-
-		  /*$.ajax({
-			  
-			  url: "<?php echo site_url('ExcelUploader/ajax_create_shipment')?>",
-			   
-			  success: function(result){
-				  
-		        //$("#div1").html(result);		        
-			        console.log('result:'+ result);
-		    }});
-		    */
-			
-		 i++;
-		 
-		 //console.log('No of rec:'+i); 
-	});
-
+		
+	}//end foreach
 	
-	 var i = 0; //variable used to count the steps
-	    function myclick(){ // function called on a button click for example
-	        var int = self.setInterval(
-	            function(){
-	                if (i == 100) window.clearInterval(int);
-	                $( "#progressbar" ).progressbar("value", i);
-	                i++;
-	            }
-	            , 100);
-	    }
-
-	    $('#btnUploadGrid').button().click(myclick); // a button element which will 
-	    var progressbar = $( "#progressbar" );
-	    var progressLabel = $( ".progress-label" );
-	                                 // start the progress bar
-	    $( "#progressbar" ).progressbar({
-	    	 value: false,
-		      change: function() {
-		        progressLabel.text( progressbar.progressbar( "value" ) + "%" );
-		      },
-		      complete: function() {
-		        progressLabel.text( "Complete!" );
-		      }
-		    }); //this part sets up the progressbar
+function update(){
+	$("#div1").html(percentage+'%');
+}
+	
 	
 	/*
 	$( function() {
@@ -205,6 +217,7 @@ $(document).ready(function() {
 	    setTimeout( progress, 2000 );
 	  } );
 	*/
+
 });
 
 </script>
