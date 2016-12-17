@@ -17,9 +17,41 @@ td{min-width: 100px;}
     font-weight: bold;
     text-shadow: 1px 1px 0 #fff;
   }
+  
+  /* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        50px;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 ) 
+                url('http://i.stack.imgur.com/FhHRx.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;   
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+    display: block;
+}
+  
 </style>
 
-<div class="container">
+<div class="container-fluid">
 <div class="row">
   <div class="col-md-12">
     
@@ -31,63 +63,34 @@ td{min-width: 100px;}
     <h3>Upload Shipments</h3>
             
         <hr>
-        <div id="progressbar"><div class="progress-label">Loading...</div></div>
+   
         <div id="div1"></div>
         <br>
         
          <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
 		<div style="overflow:scroll;height:600px;width:100%"><!-- table wrapper -->
 		 
-		<!-- <form method="post" action="<?php echo site_url("ExcelUploader/wizard")?>">-->
-			<table class="table table-bordered table table-hover" id="data_table">		    
-		    <?php 
-		     //echo '<pre>';var_dump($mapped_data_array);exit;
-		     echo '<thead>';
-		     echo '<tr class="info">';
-		     echo '<th>Excel Row #</th>';		     
+		<table class="table table-bordered table table-hover" id="data_table">	
+			<thead>
+		    <tr class="info">
+		    <th>Excel Row #</th>	    
+		    <?php 		    
 		     foreach($all_fields_list as $index=>$field){
 		     	
 		     	echo '<th>'.$field.'</th>';
 		     	
-		     }//end foreach
-		     
-		     echo '<th>Error Description</th>';
-		     echo '</tr>';		     
-		     echo '</thead>';
-		     echo '<tbody>';
-		     /*
-		     $i=1;
-		     
-		     foreach($mapped_data_array as $rows){
-		     	
-		     	echo ($i==1)? '<tr class="active">':'<tr>';
-		     	echo '<td>'.$i.'</td>';
-			     foreach($rows as $col){			     	
-			     	
-				    echo "<td>".$col."</td>";
-				    
-				 }
-				 
-				 echo '</tr>';
-				 			 
-				 $i++;			
-		     }//end foreach	      
-		    */
-		    ?>		     
-		  </tbody>
-		  </table>		  
-		  		  
-		</div><!--/ table wrapper -->
-		<br>
-		<input type="hidden" name="step" id="step" value="validate_grid">
-        <button type ="submit" class ="btn btn-primary btn-lg pull-right"  id="btnUploadGrid" name="btnUploadGrid" value="upload_grid">Upload Grid</button>
-	  <!-- </form>-->
-	  
-      <form action="<?php echo site_url('ExcelUploader/wizard')?>" method="post">
-      <input type="hidden" name="step" id="step" value="mapping">
-      <button type ="submit" class ="btn btn-primary btn-lg"  id="btnPrevious">Previous</button>
-      </form> 
-       
+		     }//end foreach	 
+		    ?>	
+		    <th>Error Description</th>
+		    </tr>		     
+		    </thead>
+		    <tbody>	     
+	  </tbody>
+	  </table>		  
+	  		  
+	</div><!--/ table wrapper -->
+	<br>
+
     </div>
     </div>
     </div>
@@ -95,12 +98,16 @@ td{min-width: 100px;}
 </div>
 </div><!-- /.container -->
 
+<div class="modal"><!-- Place at bottom of page --></div>
+
 <script>
 var debug = true;
 
 $(document).ready(function() {	
 	
-	$("div.err_empty , div.err_invalid_data , div.err_exceed_limit").closest( "tr" ).css( "background-color", "orange" );
+	$("div.err_empty , div.err_invalid_data , div.err_exceed_limit, div.soap_error")
+	.closest( "tr" )
+	.css( "background-color", "orange" );
 
 	var json_data = <?php echo $json_data_array;?>
 
@@ -108,45 +115,15 @@ $(document).ready(function() {
 
 	var tot_rows = <?php echo $tot_rows;?>
 
+	if(debug)console.log('TotRows:'+tot_rows);
+    
 	var percentage = 0;
 
-	if(debug) console.log('array count:'+ json_data.length);
-
-   
-    var progressbar = $( "#progressbar" );
-    var progressLabel = $( ".progress-label" );
-
-	progressbar.progressbar({
-	    value: false,
-	    change: function() {
-	      progressLabel.text( progressbar.progressbar( "value" ) + "%" );
-	    },
-	    complete: function() {
-	      progressLabel.text( "Complete!" );
-	    }
-	  });
-
-	function progress(percentage) {
-	    var val = progressbar.progressbar( "value" ) || 0;
+	if(debug) console.log('array count:'+ json_data.length);   
+  	
+	if(debug) console.log('total reqs:'+ req_no);
 	
-	    progressbar.progressbar( "value", percentage );
-	
-	    if ( val < 99 ) {
-	      //setTimeout( progress, 80 );
-		      //progress;
-	    }
-	  }
-
-	progressbar.progressbar( "value", percentage )
-	
-
-	var i = 0;
-	
-	//progress(0);
-		
-	for(var n=1; n <= req_no; n++){
-		
-		if(debug)console.log( 'req_no:'+ n);
+	for(var n=1; n <= req_no; n++){		
 
 		$.ajax({	
 			  
@@ -155,69 +132,48 @@ $(document).ready(function() {
 			  async: true,
 			   
 			  success: function(result){
-				  var div = $(".ui-progressbar-value");
-				  div.css.width = percentage;
 
-				//$("#div1").html(result);		
-				        
-			        if(debug)console.log('result:'+ result);
-			        
-			        if(debug)console.log('TotRows:'+tot_rows);
+				  	if(debug)console.log( 'req_no:'+ n);
+				 						        
+			        if(debug)console.log('result:'+ result);			        
 			        
 			        percentage = ((n * 10 )/tot_rows)*100;
 			        
-			        if(debug)console.log('percentage:'+ percentage);
-
-			        //if(percentage<=100){
-				      //progressbar.progressbar( "value", percentage );
-				        	progress(percentage);
-				        	//$("#data_table").html(percentage+'%');
-
-				        	$("#data_table").find('tbody').append(result);
-			        //}
+			        if(debug)console.log('percentage:'+ percentage);		        	
 		        	
+		        	$("#data_table").find('tbody').append(result);
+
+		        	$("#div1").html(n+' - '+percentage);
+	       
 		    },
 		    complete:function(result){
-			//update(percentage);
-		    }});
+			
+		    },
+		    error:function(jqXHR, textStatus, errorThrown){
+			    
+				$("#div1").html(
+				'<p>status code: '+jqXHR.status+
+				'</p><p>errorThrown: ' + 
+				errorThrown + '</p><p>jqXHR.responseText:</p><div>'+
+				jqXHR.responseText + '</div>');
+                console.log('jqXHR:');
+                console.log(jqXHR);
+                console.log('textStatus:');
+                console.log(textStatus);
+                console.log('errorThrown:');
+                console.log(errorThrown);				
+			}
+		});	
 		
-		
-	}//end foreach
-	
-function update(){
-	$("#div1").html(percentage+'%');
-}
-	
-	
-	/*
-	$( function() {
-	    var progressbar = $( "#progressbar" ),
-	      progressLabel = $( ".progress-label" );
-	 
-	    progressbar.progressbar({
-	      value: false,
-	      change: function() {
-	        progressLabel.text( progressbar.progressbar( "value" ) + "%" );
-	      },
-	      complete: function() {
-	        progressLabel.text( "Complete!" );
-	      }
-	    });
-	 
-	    function progress() {
-	      var val = progressbar.progressbar( "value" ) || 0;
-	 
-	      progressbar.progressbar( "value", val + 2 );
-	 
-	      if ( val < 99 ) {
-	        setTimeout( progress, 80 );
-	      }
-	    }
-	 
-	    setTimeout( progress, 2000 );
-	  } );
-	*/
+	}//end for
 
+});
+
+$body = $("body");
+
+$(document).on({
+    ajaxStart: function() { $body.addClass("loading");    },
+     ajaxStop: function() { $body.removeClass("loading"); }    
 });
 
 </script>

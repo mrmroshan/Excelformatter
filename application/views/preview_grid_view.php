@@ -8,7 +8,7 @@ include("header.php")
 textarea{width:100%; height:100%;}
 td{min-width: 100px;}
 </style>
-<div class="container">
+<div class="container-fluid">
 <div class="row">
   <div class="col-md-12">
     

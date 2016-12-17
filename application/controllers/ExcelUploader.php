@@ -561,6 +561,45 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
+	private function get_mapped_col_info_by_soap_field($soap_field){	
+			
+		//first prepare all table fileds list into one array
+	
+		$all_master_field_single_array = array();
+	
+		$all_field_list_multy_array = $this->get_all_fields_array();
+	
+		//make it a single multy array
+	
+		foreach($all_field_list_multy_array as $categories){
+	
+			foreach($categories as $category=>$field){
+	
+				$all_master_field_single_array[$field['FIELD_ID']] = $field;
+			}
+	
+		}//end foreach
+	
+		foreach($all_master_field_single_array as $field_id => $field_infos){
+			
+			//var_dump($field_infos);exit;
+			
+			foreach($field_infos as $field_name=>$field_value){
+				
+				if($field_name=='SOAP_FIELD' && $field_value == $soap_field){
+					
+					return $field_infos;
+						
+				}else if($soap_field == 'SOAP_error'){
+					
+					return array('FIELD_ID'=>'SOAP_error');
+				}
+			}
+		}//end of function
+	
+	}//end of function
+	
+	
 	
 	
 	private function validate_uploaded_data_array($data_array){
@@ -1227,7 +1266,7 @@ class ExcelUploader extends CI_Controller {
 		
 		$data['json_data_array'] = $json_data_array;
 		
-		$data['req_no'] = $req_no;
+		$data['req_no'] = ($req_no==0)?1:$req_no;
 		
 		$data['tot_rows'] = count($data_array);
 		
@@ -1242,7 +1281,9 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * 
+	 */
 	public function ajax_create_shipment(){
 		
 		$debug = true;
@@ -1305,6 +1346,8 @@ class ExcelUploader extends CI_Controller {
 		
 		//var_dump($BATCHSHIPMENTS);
 		
+		//var_dump($batch_data);exit;
+		
 
 		$CLIENTINFO = array(
 				'CodeStation'=>$this->CODESTATION,
@@ -1358,14 +1401,16 @@ class ExcelUploader extends CI_Controller {
 					request seq: $RequestSequence,
 					connote: $connote";
 					
-					$BATCHSHIPMENTS[$m]= $this->soap_response_incorporater($result,$BATCHSHIPMENTS[$m],$m);
+					$batch_data[$m]= $this->soap_response_incorporater(
+							$result,
+							$batch_data[$m],
+							$m);
 						
 					$m++;
 					
 				}//end foreach
 					
-			}else{
-		
+			}else{		
 			
 				$response_msg = $shipment_upload_responce->ResponseMessage;
 					
@@ -1383,54 +1428,78 @@ class ExcelUploader extends CI_Controller {
 				
 				$m = 0;
 				
-				$BATCHSHIPMENTS[$m] = $this->soap_response_incorporater($shipment_upload_responce,$BATCHSHIPMENTS[$m],$m);
+				$batch_data[$m] = $this->soap_response_incorporater(
+						$shipment_upload_responce,
+						$batch_data[$m],
+						$m);
+			
 			}//end if
 			
+						
+			$this->set_after_SOAP_response_data_array($batch_data);			
 			
-			$this->set_after_SOAP_response_data_array($BATCHSHIPMENTS);
-			
-			
-			//var_dump($this->get_after_SOAP_response_data_array());
-		
+					
 		} catch (SoapFault $fault) {
 				
-			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
+			trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
 			if($debug)$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
-		}
-		
+		}		
 		
 		//if($debug)echo $data['output'];
 		
 		//echo $this->get_after_SOAP_response_data_array();
 		
-		echo $this->prepare_table_html($this->get_after_SOAP_response_data_array());
+		$soap_responce_data = $this->get_after_SOAP_response_data_array();
+		
+		echo $this->prepare_table_html($soap_responce_data,$sequence);
 		
 	}//end of function
+		
 	
 	
-	private function prepare_table_html($data_array){
+	/**
+	 * prepare_table_html()
+	 * 
+	 * This function gets submitted soap requests array data and then prepares
+	 * html table <tr> elements with values to be displayed in the grid via 
+	 * AJAX response.
+	 * 
+	 * @param unknown $data_array
+	 * @return string
+	 */
+	private function prepare_table_html($data_array,$sequence){		
+			
+		$debug = false;
 		
-		//$tbody = '<tbody>';
+		$field_info = null;
 		
-		$tbody = '<tr>';
+		$mapped_cols_array = $this->get_mapped_cols_array();
+	
+		$tbody = '<tr>';		
 		
-		$i=0;
+		$i=((int)$sequence*10)-9;
 		
 		foreach($data_array as $rows){
 		
 			$tbody .= '<td>'.$i.'</td>';
 			
-			foreach($rows as $col){
-				 
-				$tbody .= "<td>".$col."</td>";
-		
-			}				
+			foreach($rows as $field_id=>$value){
+					
+				if($debug) {
+					
+					$tbody .= "<td>".$value.'-'.$field_id."</td>";
+					
+				}else{
+					
+					$tbody .= "<td>".$value."</td>";							
+				}	
+				
+			}			
 			
-			$tbody .= '</tr>';
-			
-			//$tbody .= '</tbody>';
+			$tbody .= '</tr>';		
 			
 			$i++;
+			
 		}//end foreach
 		
 		return $tbody;
@@ -1461,9 +1530,11 @@ class ExcelUploader extends CI_Controller {
 			
 		}else{
 			
-			$data_row['SOAP_error']= "";
+			$data_row['SOAP_error']= "N/A";
 			
 		}//end if
+		
+		//var_dump($data_row);exit;
 		
 		return $data_row;
 		
