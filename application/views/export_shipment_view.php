@@ -64,7 +64,7 @@ body.loading .modal {
             
         <hr>
    
-        <div id="div1"></div>
+        <div id="msg_div"></div>
         <br>
         
          <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
@@ -81,7 +81,7 @@ body.loading .modal {
 		     	
 		     }//end foreach	 
 		    ?>	
-		    <th>Error Description</th>
+		    <th>Upload Results</th>
 		    </tr>		     
 		    </thead>
 		    <tbody>	     
@@ -105,12 +105,6 @@ var debug = true;
 
 $(document).ready(function() {	
 	
-	$("div.err_empty , div.err_invalid_data , div.err_exceed_limit, div.soap_error")
-	.closest( "tr" )
-	.css( "background-color", "orange" );
-
-	var json_data = <?php echo $json_data_array;?>
-
 	var req_no = <?php echo $req_no?>
 
 	var tot_rows = <?php echo $tot_rows;?>
@@ -119,8 +113,6 @@ $(document).ready(function() {
     
 	var percentage = 0;
 
-	if(debug) console.log('array count:'+ json_data.length);   
-  	
 	if(debug) console.log('total reqs:'+ req_no);
 	
 	for(var n=1; n <= req_no; n++){		
@@ -137,18 +129,9 @@ $(document).ready(function() {
 				 						        
 			        if(debug)console.log('result:'+ result);			        
 			        
-			        percentage = ((n * 10 )/tot_rows)*100;
-			        
-			        if(debug)console.log('percentage:'+ percentage);		        	
-		        	
-		        	$("#data_table").find('tbody').append(result);
-
-		        	$("#div1").html(n+' - '+percentage);
+			       	$("#data_table").find('tbody').append(result);			        	
 	       
-		    },
-		    complete:function(result){
-			
-		    },
+		    },		    
 		    error:function(jqXHR, textStatus, errorThrown){
 			    
 				$("#div1").html(
@@ -162,20 +145,55 @@ $(document).ready(function() {
                 console.log(textStatus);
                 console.log('errorThrown:');
                 console.log(errorThrown);				
-			}
+			},
+			complete:function(result){
+			
+		    },
 		});	
 		
 	}//end for
 
 });
 
+
+
 $body = $("body");
 
 $(document).on({
     ajaxStart: function() { $body.addClass("loading");    },
-     ajaxStop: function() { $body.removeClass("loading"); }    
+
+    ajaxStop: function() { 
+        
+        $body.removeClass("loading");
+
+        var has_error = $( "div" ).hasClass( "soap_error" )
+       
+        if(has_error) {
+              
+        	 var error = set_error("Following rows which are highlited in orange color, " +
+                	 "has some issues. Please check last column 'Upload Results' to see the descriptions.");
+
+        	 $("#msg_div").html(error);
+        }
+
+        $("div.err_empty , div.err_invalid_data , div.err_exceed_limit, div.soap_error")
+    	.closest( "tr" )
+    	.css( "background-color", "orange" );
+        
+    }    
 });
 
+function set_error(text){
+
+	var err_html =  '<div class="alert alert-warning alert-dismissible" role="alert">'+
+	 '<button type="button" class="close" data-dismiss="alert" aria-label="Close">'+
+	 '<span aria-hidden="true">&times;</span></button>'+
+	 '<strong>Error!</strong> '+
+	 text +
+	 '</div>';
+
+	 return err_html;
+}
 </script>
 
 <?php include ("footer.php")?>

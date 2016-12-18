@@ -1288,7 +1288,7 @@ class ExcelUploader extends CI_Controller {
 		
 		$debug = true;
 		
-		$data = array('output'=>'');
+		$data = array('debug_data'=>'');
 		
 		$sequence = $this->input->get("sequence");
 		
@@ -1378,9 +1378,9 @@ class ExcelUploader extends CI_Controller {
 				
 			$result = $client->BatchShipments($parameters);
 				
-			if($debug) $data['output'] .=  "<pre>REQUEST:\n" . $client->__getLastRequest() . "\n";
+			if($debug) $data['debug_data'] .=  "<pre>REQUEST:\n" . $client->__getLastRequest() . "\n";
 				
-			if($debug)$data['output'] .=  "<br><pre>Response:\n" . $client->__getLastResponse() . "\n";//htmlentities(
+			if($debug)$data['debug_data'] .=  "<br><pre>Response:\n" . $client->__getLastResponse() . "\n";//htmlentities(
 				
 			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
 				
@@ -1395,7 +1395,7 @@ class ExcelUploader extends CI_Controller {
 					$RequestSequence = $result->RequestSequence;
 					$connote = $result->Connote;
 						
-					$data['output'] .= "<hr><br>
+					$data['debug_data'] .= "<hr><br>
 					responce msg: $response_msg,
 					error msg: $error_msg,
 					request seq: $RequestSequence,
@@ -1420,7 +1420,7 @@ class ExcelUploader extends CI_Controller {
 					
 				$connote = $shipment_upload_responce->Connote;
 					
-				$data['output'] .= "<hr><br>
+				$data['debug_data'] .= "<hr><br>
 				responce msg: $response_msg,
 				error msg: $error_msg,
 				request seq: $RequestSequence,
@@ -1442,16 +1442,16 @@ class ExcelUploader extends CI_Controller {
 		} catch (SoapFault $fault) {
 				
 			trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-			if($debug)$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
+			if($debug)$data['debug_data'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
 		}		
 		
-		//if($debug)echo $data['output'];
+		if($debug) $data['debug_data'];
 		
 		//echo $this->get_after_SOAP_response_data_array();
 		
 		$soap_responce_data = $this->get_after_SOAP_response_data_array();
 		
-		echo $this->prepare_table_html($soap_responce_data,$sequence);
+		echo $this->prepare_table_html($soap_responce_data,$sequence,$data['debug_data']);
 		
 	}//end of function
 		
@@ -1467,7 +1467,7 @@ class ExcelUploader extends CI_Controller {
 	 * @param unknown $data_array
 	 * @return string
 	 */
-	private function prepare_table_html($data_array,$sequence){		
+	private function prepare_table_html($data_array,$sequence,$debug_data){		
 			
 		$debug = false;
 		
@@ -1485,16 +1485,11 @@ class ExcelUploader extends CI_Controller {
 			
 			foreach($rows as $field_id=>$value){
 					
-				if($debug) {
-					
-					$tbody .= "<td>".$value.'-'.$field_id."</td>";
-					
-				}else{
-					
-					$tbody .= "<td>".$value."</td>";							
-				}	
+				$tbody .= "<td>".$value."</td>";
 				
-			}			
+			}
+			
+			if($debug) $tbody.="<td>$debug_data</td>";
 			
 			$tbody .= '</tr>';		
 			
@@ -1510,11 +1505,10 @@ class ExcelUploader extends CI_Controller {
 	
 	private function soap_response_incorporater($soap_response,$data_row,$arr_sequence){
 		
-		//var_dump($BATCHSHIPMENTS);
 		
 		//$data_array = $this->get_mapped_data_array_from_session();
 		
-		//var_dump($data_array);exit;
+		//var_dump($data_row);exit;
 		
 		$response_msg = $soap_response->ResponseMessage;
 		
@@ -1524,14 +1518,23 @@ class ExcelUploader extends CI_Controller {
 		
 		$connote = $soap_response->Connote;
 		
+		$msg = "";
+		
 		if($response_msg === 'FAILED'){
 			
-			$data_row['SOAP_error']= '<div class="soap_error">'.$error_msg.'</div>';
 			
-		}else{
+			$msg = $this->get_error($error_msg);
 			
-			$data_row['SOAP_error']= "N/A";
+			$data_row['SOAP_error']= '<div class="soap_error">'.$msg.'</div>';
 			
+		}else if($response_msg === 'INTERNAL ERROR'){	
+			
+			$data_row['SOAP_error']= '<div class="soap_error">Could not upload record. Internal Server Error'.$response_msg.'</div>';
+			
+		}else if($response_msg === 'SUCCESS'){		
+			
+			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.'<br>'.$connote.'</div>';
+					
 		}//end if
 		
 		//var_dump($data_row);exit;
@@ -1541,6 +1544,53 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
+	
+	private function get_error($error_code){
+		
+		$msg = null;
+		
+		$debug = true;
+		
+		switch($error_code){
+			
+			case "PICKUPNOTFOUND":
+				
+				$msg = "PICKUP number is not found.";
+				
+				break;
+		
+			case "JCSNOPICKUP":
+					
+				$msg = "Either JCS or PICKUP number is incorrect.";
+					
+				break;
+				
+			case"Invalid ConsigneeProvinceCode":
+				
+				$msg = "Consignee Provice Code is incorrect";
+				
+				break;
+				
+			case "Invalid ConsigneeCountryCode":
+				
+				$msg = "Consignee Country Code is incorrect";
+				
+				break;
+								
+			case "Invalid CodeService":
+				
+				$msg = "Service Code is incorrect";
+				
+				break;
+				
+				
+		}//end switch
+		
+		if($debug) $msg.=' - '.$error_code;
+		
+		return $msg;
+		
+	}//end of function
 	
 	
 	
@@ -1590,7 +1640,7 @@ class ExcelUploader extends CI_Controller {
 	
 	public function upload_shipment($data_array){
 		
-		$data['output'] = null;
+		$data['debug_data'] = null;
 		
 		//$this->dump_data($data_array);		
 		
@@ -1662,9 +1712,9 @@ class ExcelUploader extends CI_Controller {
 			
 			$result = $client->BatchShipments($parameters1);
 			
-			$data['output'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
+			$data['debug_data'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
 			
-			$data['output'] .=  "<br><pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";//htmlentities(
+			$data['debug_data'] .=  "<br><pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";//htmlentities(
 			
 			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
 			
@@ -1677,7 +1727,7 @@ class ExcelUploader extends CI_Controller {
 					$RequestSequence = $result->RequestSequence;
 					$connote = $result->Connote;
 			
-					$data['output'] .= "<hr><br>
+					$data['debug_data'] .= "<hr><br>
 					responce msg: $response_msg, 
 					error msg: $error_msg, 
 					requence seq: $RequestSequence, 
@@ -1699,7 +1749,7 @@ class ExcelUploader extends CI_Controller {
 					
 				$connote = $shipment_upload_responce->Connote;
 					
-				$data['output'] .= "<hr><br>
+				$data['debug_data'] .= "<hr><br>
 				responce msg: $response_msg, 
 				error msg: $error_msg, 
 				requence seq: $RequestSequence, 
@@ -1709,7 +1759,7 @@ class ExcelUploader extends CI_Controller {
 		} catch (SoapFault $fault) {
 			
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-			$data['output'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
+			$data['debug_data'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
 		}	
 
 		$this->load->view('soap_request_responce_view', $data);
