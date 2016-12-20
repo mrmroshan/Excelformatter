@@ -57,10 +57,45 @@ body.loading .modal {
     
     <div class="panel panel-default">
     <div class="panel-heading">
-      <h2 class="panel-title">Uploading...</h2>
+      <h2 class="panel-title">Admin</h2>
     </div>
     <div class="panel-body">
-    <h3>Upload Shipments</h3>
+    <?php 
+    //echo '<pre>';var_dump($results);
+    /*
+     *  [0]=>
+  array(14) {
+    ["FIELD_ID"]=>
+    string(2) "55"
+    ["CATEGORY_ID"]=>
+    string(1) "1"
+    ["FIELD_INDEX"]=>
+    string(1) "0"
+    ["FIELD_LABEL"]=>
+    string(6) "SRL No"
+    ["REQUIRED"]=>
+    string(1) "1"
+    ["REGXPATTERN"]=>
+    string(7) "^[0-9]$"
+    ["MAXCHARS"]=>
+    string(2) "10"
+    ["PRECHKFIELDS"]=>
+    string(0) ""
+    ["SOAP_FIELD"]=>
+    string(15) "RequestSequence"
+    ["DATATYPE"]=>
+    string(3) "INT"
+    ["MAPPED_COL_NAMES"]=>
+    string(13) "Srl No|Srl.No"
+    ["ID"]=>
+    string(1) "1"
+    ["CATEGORY"]=>
+    string(3) "AWB"
+    ["CAT_LABEL"]=>
+    string(8) "AWB INFO"
+  }*/
+    ?>
+    <h3></h3>
             
         <hr>
    
@@ -73,19 +108,34 @@ body.loading .modal {
 		<table class="table table-bordered table table-hover" id="data_table">	
 			<thead>
 		    <tr class="info">
-		    <th>Excel Row #</th>	    
-		    <?php 		    
-		     foreach($all_fields_list as $index=>$field){
-		     	
-		     	echo '<th>'.$field.'</th>';
-		     	
-		     }//end foreach	 
-		    ?>	
-		    <th>Upload Results</th>
+		    <th>Id</th>		   			    		   
+		    <th>Name</th>
+		    <th>Data type</th>
+		    <th>Required?</th>
+		    <th>Order</th>
+		    <th>Char Limit</th>
+		    <th>Mapped SOAP Tag</th>		    
+		    <th>Auto Mapping Column Names</th>
+		    <th>Regex Pattern</th>
+		    
 		    </tr>		     
 		    </thead>
-		    <tbody>	     
-	  </tbody>
+		    <tbody>	
+		    <?php 
+		    foreach($results as $row){
+		    	echo '<tr>';
+		    	echo '<td>'.$row['FIELD_ID'].'</td>';
+		    	echo '<td><a href="'.site_url('admin/edit/'.$row['FIELD_ID']).'">'.$row['FIELD_LABEL'].'</a></td>';
+		    	echo '<td>'.$row['DATATYPE'].'</td>';
+		    	echo '<td>'.(($row['REQUIRED']==1)?'YES':'NO').'</td>';
+		    	echo '<td>'.$row['FIELD_INDEX'].'</td>';
+		    	echo '<td>'.$row['MAXCHARS'].'</td>';
+		    	echo '<td>'.$row['SOAP_FIELD'].'</td>';		    	
+		    	echo '<td>',$row['MAPPED_COL_NAMES'].'</td>';
+		    	echo '<td>'.$row['REGXPATTERN'].'</td>';
+		    }
+		    ?>     
+	  		</tbody>
 	  </table>		  
 	  		  
 	</div><!--/ table wrapper -->
@@ -105,84 +155,7 @@ var debug = true;
 
 $(document).ready(function() {	
 	
-	var req_no = <?php echo $req_no?>
-
-	var tot_rows = <?php echo $tot_rows;?>
-
-	if(debug)console.log('TotRows:'+tot_rows);
-    
-	var percentage = 0;
-
-	if(debug) console.log('total reqs:'+ req_no);
 	
-	for(var n=1; n <= req_no; n++){		
-
-		$.ajax({	
-			  
-			  url: "<?php echo site_url('ExcelUploader/ajax_create_shipment?sequence=')?>"+n,
-
-			  async: true,
-			   
-			  success: function(result){
-
-				  	if(debug)console.log( 'req_no:'+ n);
-				 						        
-			        if(debug)console.log('result:'+ result);			        
-			        
-			       	$("#data_table").find('tbody').append(result);			        	
-	       
-		    },		    
-		    error:function(jqXHR, textStatus, errorThrown){
-			    
-				$("#div1").html(
-				'<p>status code: '+jqXHR.status+
-				'</p><p>errorThrown: ' + 
-				errorThrown + '</p><p>jqXHR.responseText:</p><div>'+
-				jqXHR.responseText + '</div>');
-                console.log('jqXHR:');
-                console.log(jqXHR);
-                console.log('textStatus:');
-                console.log(textStatus);
-                console.log('errorThrown:');
-                console.log(errorThrown);				
-			},
-			complete:function(result){
-			
-		    },
-		});	
-		
-	}//end for
-
-});
-
-
-
-$body = $("body");
-
-$(document).on({
-    ajaxStart: function() { $body.addClass("loading");    },
-
-    ajaxStop: function() { 
-        
-        $body.removeClass("loading");
-
-        var has_error = $( "div" ).hasClass( "soap_error" )
-       
-        if(has_error) {
-              
-        	 var error = set_error("Following rows which are highlited in orange color, " +
-                	 "has some issues. Please check last column 'Upload Results' to see the descriptions.");
-
-        	 $("#msg_div").html(error);
-        }
-
-        $("div.err_empty , div.err_invalid_data , div.err_exceed_limit, div.soap_error")
-    	.closest( "tr" )
-    	.css( "background-color", "orange" );
-
-        $("div.soap_success").closest('tr').css('background-color','yellowgreen');
-                
-    }    
 });
 
 function set_error(text){

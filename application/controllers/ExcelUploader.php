@@ -1286,7 +1286,7 @@ class ExcelUploader extends CI_Controller {
 	 */
 	public function ajax_create_shipment(){
 		
-		$debug = true;
+		$debug = false;
 		
 		$data = array('debug_data'=>'');
 		
@@ -1326,11 +1326,20 @@ class ExcelUploader extends CI_Controller {
 				
 				if($mapped_col_info['DATATYPE'] == 'DATE'){
 		
-					$datacell = date("Y-m-d", strtotime($datacell));
-		
+					if($datacell !== ''){
+						
+						$datacell = date("Y-m-d", strtotime($datacell));
+					}else {
+						$datacell = '0001-01-01';
+					}
+					
 					//$this->dump_data($datacell);
 				}
-				$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;				
+				
+				//if($datacell !== '' ){
+					
+					$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
+				//}
 		
 			}//end foreach
 				
@@ -1378,7 +1387,7 @@ class ExcelUploader extends CI_Controller {
 				
 			$result = $client->BatchShipments($parameters);
 				
-			if($debug) $data['debug_data'] .=  "<pre>REQUEST:\n" . $client->__getLastRequest() . "\n";
+			if($debug) $data['debug_data'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
 				
 			if($debug)$data['debug_data'] .=  "<br><pre>Response:\n" . $client->__getLastResponse() . "\n";//htmlentities(
 				
