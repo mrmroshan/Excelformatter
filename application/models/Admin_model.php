@@ -2,6 +2,9 @@
 class Admin_model extends CI_Model {
 
         
+		public $MAPPED_COL_NAMES;
+		
+	
         public function __construct()
         {
                 // Call the CI_Model constructor
@@ -19,6 +22,20 @@ class Admin_model extends CI_Model {
         	
         	return $query->result_array();
         }
+        
+        
+        public function get_field_info($fid){
+        	
+        	$this->db->select('A.*');
+        	$this->db->from('field_list A');
+        	$this->db->where(array('FIELD_ID'=>$fid));
+        	$this->db->order_by("A.FIELD_INDEX","ASC");
+        	$query = $this->db->get();
+        	 
+        	return $query->result_array();
+        	
+        }
+        
 
         public function get_last_ten_entries()
         {
@@ -35,16 +52,17 @@ class Admin_model extends CI_Model {
                 $this->db->insert('entries', $this);*/
         }
 
-        public function update_entry($data_array)
-        {
-               $this->MAPPED_COL_NAMES    = $data_array['MAPPED_COL_NAMES'];
-                               
-               $status =  $this->db->update('field_list', $this, array(
-                		'FIELD_ID' => $data_array['FIELD_ID'])
+        
+        public function update_field($data)
+        {                       
+               $status =  $this->db->update('field_list', $data, array(
+                		'FIELD_ID' => $data['FIELD_ID'])
                 		);
                
                return $status;
         }
+        
+        
 
 }
 ?>

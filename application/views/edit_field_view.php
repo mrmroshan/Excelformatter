@@ -57,7 +57,7 @@ body.loading .modal {
     
     <div class="panel panel-default">
     <div class="panel-heading">
-      <h2 class="panel-title">Admin</h2>
+      <h2 class="panel-title">Edit Fields</h2>
     </div>
     <div class="panel-body">
     
@@ -68,39 +68,52 @@ body.loading .modal {
         <div id="msg_div"></div>
         <br>
         
-         <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
+         <?php 
+         if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}
+       
+         ?>  
 		
-		<form>
+		<form action = "<?php echo site_url('admin/edit/'.$field_info['FIELD_INDEX']) ?>" method="post">
 			<div class="form-group row">
 			  <label for="FIELD_LABEL" class="col-md-3 col-form-label">FIELD LABEL</label>
 			  <div class="col-md-9">
-			    <input class="form-control" type="text" value="" id="FIELD_LABEL" name ="FIELD_LABEL">
+			    <input class="form-control" type="text" 
+			    value="<?php echo $field_info['FIELD_LABEL']?>" 
+			    id="FIELD_LABEL" 
+			    name ="FIELD_LABEL">
 			  </div>
 			</div>
 			<div class="form-group row">
 			  <label for="FIELD_INDEX" class="col-md-3 col-form-label">FIELD INDEX</label>
 			  <div class="col-xs-3">
-			    <input class="form-control" type="text" value="" id="FIELD_INDEX" name="FIELD_INDEX">
+			    <input class="form-control" 
+			    type="text" 
+			    value="<?php echo $field_info['FIELD_INDEX']?>" 
+			    id="FIELD_INDEX" 
+			    name="FIELD_INDEX">
 			  </div>
 			</div>
-			<div class="form-group row">
-			  <label for="REQUIRED" class="col-md-3 col-form-label">REQUIRED?</label>
-			  <div class="col-md-9">
-			      <input type="checkbox" class="form-check-input" id="REQUIRED" name="REQUIRED">
-			  </div>
-			</div>		
+			
 			
 			<div class="form-group row">
 			  <label for="example-url-input" class="col-md-3 col-form-label">MAXCHARS</label>
 			  <div class="col-xs-3">
-			    <input class="form-control" type="text" value="" id="MAXCHARS" name="MAXCHARS">
+			    <input class="form-control" 
+			    type="text" 
+			    value="<?php echo $field_info['MAXCHARS']?>" 
+			    id="MAXCHARS" 
+			    name="MAXCHARS">
 			  </div>
 			</div>
 			
 			<div class="form-group row">
 			  <label for="SOAP_FIELD" class="col-md-3 col-form-label">SOAP FIELD</label>
 			  <div class="col-xs-3">
-			    <input class="form-control" type="text" value="" id="SOAP_FIELD" name="SOAP_FIELD">
+			    <input class="form-control" 
+			    type="text" 
+			    value="<?php echo $field_info['SOAP_FIELD']?>" 
+			    id="SOAP_FIELD" 
+			    name="SOAP_FIELD">
 			  </div>
 			</div>
 			
@@ -108,10 +121,10 @@ body.loading .modal {
 		    <label for="DATATYPE" class="col-md-3 col-form-label">DATATYPE</label>
 		    <div class="col-xs-3">
 		    <select  class="form-control" id="DATATYPE" name="DATATYPE"> 
-		      <option value="STRING">STRING</option>
-		      <option value="INT">INTEGER</option>
-		      <option value="FLOAT">FLOAT</option>
-		      <option value="DATE">DATE</option>
+		      <option value="STRING" <?php echo ($field_info['DATATYPE']== 'STRING')? 'selected="selected" ':null?>>STRING</option>
+		      <option value="INT" <?php echo ($field_info['DATATYPE']== 'INT')? 'selected="selected" ':null?>>INTEGER</option>
+		      <option value="FLOAT" <?php echo ($field_info['DATATYPE']== 'FLOAT')? 'selected="selected" ':null?>>FLOAT</option>
+		      <option value="DATE" <?php echo ($field_info['DATATYPE']== 'DATE')? 'selected="selected" ':null?>>DATE</option>
 		    </select>
 		  	</div>
 		  	</div>
@@ -120,15 +133,29 @@ body.loading .modal {
 			<div class="form-group row">
 			  <label for="REGXPATTERN" class="col-md-3 col-form-label">REGXPATTERN</label>
 			  <div class="col-md-9">
-			    <textarea class="form-control" id="REGXPATTERN" name="REGXPATTERN"></textarea>
+			    <textarea class="form-control" 
+			    id="REGXPATTERN" 
+			    name="REGXPATTERN"><?php echo $field_info['REGXPATTERN']?></textarea>
 			  </div>
 			</div>
 			<div class="form-group row">
 			  <label for="MAPPED_COL_NAMES" class="col-md-3 col-form-label">MAPPED COLLUMN NAMES</label>
 			  <div class="col-md-9">
-			    <textarea class="form-control" id="MAPPED_COL_NAMES"></textarea>
+			    <textarea class="form-control" 
+			    id="MAPPED_COL_NAMES"
+			    name ="MAPPED_COL_NAMES"><?php echo $field_info['MAPPED_COL_NAMES']?></textarea>
 			  </div>
 			</div>
+			
+			<div class="form-group row">
+			  <label for="REQUIRED" class="col-md-3 col-form-label">REQUIRED?</label>
+			  <div class="col-md-9">
+			      <input type="checkbox" class="form-check-input" 
+			      id="REQUIRED" 
+			      name="REQUIRED"			      
+			      <?php echo ($field_info['REQUIRED']== '1')? 'CHECKED' :null?>>
+			  </div>
+			</div>		
 			
 			
 		  <button type="submit" class="btn btn-primary">Submit</button>
