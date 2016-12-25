@@ -87,6 +87,52 @@ class ExcelUploader extends CI_Controller {
 
 	
 	
+	private function check_sessions(){
+	
+		if(empty($this->session->userdata('template_col_list_array')) and
+				empty($this->session->userdata('excel_data_array'))and
+				empty($this->session->userdata('up_file_col_list_array'))){
+	
+					$this->session->set_flashdata(
+							'error',
+							'Session Expired! Please start over again.');
+					redirect('ExcelUploader/index', 'refresh');
+						
+	
+		}
+		$step='';
+		switch($step){
+			case 'first':
+				break;
+			case 'second':
+				if(empty($this->session->userdata('template_col_list_array'))){
+	
+					$this->session->set_flashdata(
+							'error',
+							'Please select the template fields first before
+ 							prceeding with other steps!');
+					redirect('ExcelUploader/index', 'refresh');
+				}
+				break;
+			case 'third':
+					
+				if(empty($this->session->userdata('excel_data_array'))){
+						
+					$this->session->set_flashdata(
+							'error',
+							'Please upload your Excel file first before
+ 							prceeding with other steps!');
+						
+					redirect('ExcelUploader/upload_excel_file', 'refresh');
+				}
+				break;
+			case 'four':
+				break;
+	
+		}//end switch
+			
+	}//end of function
+	
 	
 	/**
 	 * Index()
