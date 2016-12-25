@@ -2,19 +2,21 @@
 include("header.php")
 ?>
 
-<div class="container">
+<div class="container-fluid">
 	<div class="row">
 		<div class="col-md-12">
     
 	    <div class="panel panel-default">
 	    <div class="panel-heading">
-	      <h2 class="panel-title">Step 1</h2>
+	      <h2 class="panel-title">Map Columns</h2>
 	    </div>
 	    <div class="panel-body">
-	    <?php 
-	    if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>    
-	      <h3 style="text-align:center">Please select matching column names from the dropdowns to map with fields names</h3>
+	       
+	      <h3 style="text-align:center">Please select matching column names from the dropdowns to map with shipment fields names</h3>
+	      <hr>
 	      <br>
+	      <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
+	      <div id="msg"></div>	    
 	      <form id = "mapfields" class="form-horizontal" method="post" action="<?php echo site_url('ExcelUploader/wizard')?>" onsubmit="">
 	     	
 	      <?php 
@@ -22,50 +24,64 @@ include("header.php")
 	      //echo '<pre>';var_dump($all_field_list_array);exit;
 	      foreach($all_field_list_array as $category=>$fields){?>
 	      <div class="row">
-	      <div class="col-md-10 col-md-offset-1" >
-	      <div class="row">
-	      <div id="msg"></div>
-	      	<div class="panel panel-default">
-		    <div class="panel-heading">
-		      <h2 class="panel-title"><?php echo str_replace('_'," ",$category)?></h2>		      
-		    </div>
-		    <div class="panel-body ">    
+	     
 		    
 		   	<?php 
-		   	//var_dump($fields);exit;
-		   	foreach($fields as $k1){?>
-		   		
-				   	<div class="form-group">
-		    			<label for="<?php echo $k1['FIELD_LABEL'];?>" class="col-sm-4 control-label"><?php echo $k1['FIELD_LABEL'];?>
-		    			<?php if($k1['REQUIRED'] == 1){?><font style="color:red">*</font><?php }?></label>
-		    				<div class="col-sm-8">
-		      				<select class="dropdown-toggle form-control" style="width: 50%" name="<?php echo $k1['FIELD_ID'].'-'.str_replace(" ","_", $k1['FIELD_LABEL'])?>" id="<?php echo str_replace(" ","_", $k1['FIELD_LABEL'])?>">
-							    <option value="">Please select a field</option>
-							    <?php 					    
-							   
-							    $i = 0;
-							    foreach($up_file_col_list as $col_list){
-							    	
-							    	$mapped_fields_array = explode("|", $k1['MAPPED_COL_NAMES']);
-							    	//var_dump($mapped_fields_array);exit;
-							    	
-							    	if( in_array( trim($col_list),$mapped_fields_array ) ) {
-							    		echo '<option value="'.$i.'" selected="selected">'.$col_list.'</option>';
-							    	}else{
-							    		echo '<option value="'.$i.'"  >'.$col_list.'</option>';
-							    	}
-							    	$i++;
-							    }				   				
-							    ?>							   		    
-							 </select>   
-						</div><!--/col-sm-10 -->
-		  			</div><!--/form-group -->	   		
-				
-		   	<?php }?>  	       
 		   	
-	        </div><!-- end of panel body -->
-	        </div><!-- end of panel -->       
-	        </div><!-- end of col md 6 -->	
+		   	$items_per_col = ((count($fields)/3)%10 != 0 )? round(count($fields)/3):(count($fields)/3);
+		  	
+		   	$field_count = 1;
+		   	
+		   	foreach($fields as $k1){
+		   	
+		   		if($field_count == 1 || 
+		   				$field_count == ($items_per_col+1) || 
+		   				$field_count == (($items_per_col * 2)+1)){
+		   			
+		   			echo '<div class="col-md-4">';
+		   			
+		   		}
+		   		
+		   		?>
+		   			   		
+			   	<div class="form-group">
+	    			<label for="<?php echo $k1['FIELD_LABEL'];?>" class="col-sm-4 control-label"><?php echo $k1['FIELD_LABEL'];?>
+	    			
+	    			<?php if($k1['REQUIRED'] == 1){?><font style="color:red">*</font><?php }?></label>
+	    				
+	    				<div class="col-sm-8">
+	      				<select class="dropdown-toggle form-control" style="width: 50%" name="<?php echo $k1['FIELD_ID'].'-'.str_replace(" ","_", $k1['FIELD_LABEL'])?>" id="<?php echo str_replace(" ","_", $k1['FIELD_LABEL'])?>">
+						    <option value="">Please select a field</option>
+						    <?php 					    
+						   
+						    $i = 0;
+						    foreach($up_file_col_list as $col_list){
+						    	
+						    	$mapped_fields_array = explode("|", $k1['MAPPED_COL_NAMES']);
+						    	//var_dump($mapped_fields_array);exit;
+						    	
+						    	if( in_array( trim($col_list),$mapped_fields_array ) ) {
+						    		echo '<option value="'.$i.'" selected="selected">'.$col_list.'</option>';
+						    	}else{
+						    		echo '<option value="'.$i.'"  >'.$col_list.'</option>';
+						    	}
+						    	$i++;
+						    }				   				
+						    ?>							   		    
+						 </select>   
+					</div><!--/col-sm-10 -->
+	  			</div><!--/form-group -->	   		
+				
+			   	<?php 
+			   		
+			   		$field_count++;
+			   		if($field_count == ($items_per_col+1) || 
+			   				$field_count == (($items_per_col * 2 )+ 1) || 
+			   				($field_count > ($items_per_col * 2 ) && $field_count < ($items_per_col * 2)) ){
+			   			echo '</div>';
+			   		}
+			   	}
+			   	?>  	           
 	        	          
 	    </div><!-- /col-md-10 -->     
 	    </div><!-- /row -->
