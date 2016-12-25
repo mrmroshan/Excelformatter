@@ -57,12 +57,11 @@ body.loading .modal {
     
     <div class="panel panel-default">
     <div class="panel-heading">
-      <h2 class="panel-title">Uploading...</h2>
+      <h2 class="panel-title">Upload Shipments.</h2>
     </div>
     <div class="panel-body">
-    <h3>Upload Shipments</h3>
-            
-        <hr>
+    <h3>Upload Shipments Results</h3>            
+     <hr>
    
         <div id="msg_div"></div>
         <br>

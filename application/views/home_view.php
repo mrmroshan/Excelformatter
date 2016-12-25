@@ -10,7 +10,9 @@ include("header.php")
       <h3 class="panel-title">Upload Excel File</h3>
     </div>
     <div class="panel-body">
-      <p>Please upload your Excel file to list all columns in the spread sheet</p>
+      <p>Please upload your Excel file to proceed</p>
+      
+      <hr>
       
         <?php echo (!empty($error))?$error:null;?>
 

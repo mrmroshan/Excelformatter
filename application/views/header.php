@@ -10,11 +10,12 @@
     <!-- Bootstrap -->
    <?php include("css_js_code.php")?>
    <style type="text/css">
-   	body{padding-top:60px;}
+   	body{padding-top:5px;}
    </style>
   </head>
   <body>
-
+	<?php 
+	/*
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
@@ -37,3 +38,6 @@
         </div><!--/.nav-collapse -->
       </div>
     </nav>
+    
+	*/
+    ?>
