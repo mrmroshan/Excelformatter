@@ -13,7 +13,7 @@ ini_set('max_execution_time', 300);
  */
 class ExcelUploader extends CI_Controller {
 
-	private $debug = true;
+	private $debug = false;
 	
 	private $selected_col_list = null;
 	
@@ -25,19 +25,34 @@ class ExcelUploader extends CI_Controller {
 	
 	private $CODESTATION = null;
 	
+	/**
+	 * __construct()
+	 * 
+	 * Controller construct
+	 * 
+	 */
 	function __construct(){
 
 		parent::__construct();
+		
 		$config['upload_path']          = './uploads/';
+		
         $config['allowed_types']        = 'xls|xlsx|csv';
+        
         //$config['max_size']             = 1000;
+        
         //$config['max_width']            = 1024;
+        
         //$config['max_height']           = 768;
+        
 		$this->load->library('upload', $config);
 
 		//load our new PHPExcel library
+		
 		$this->load->library('excel');
+		
 		//$this->load->library('SOAPClient_lib');
+		
 		$this->load->model('ExcelUploader_model');
 		
 		$this->ACCOUNTNO = 'Test7474';
@@ -52,62 +67,25 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
-	
+	/**
+	 * unset_sessions()
+	 * 
+	 * This function is used for unsetting all app sessions for testing
+	 *  
+	 */
 	public function unset_sessions(){
 		
-		$array_items = array('excel_data_array', 'template_col_list_array','up_file_col_list_array');		
-		$this->session->unset_userdata($array_items);
-		session_destroy();
-	}
-
-	
-	
-	private function check_sessions(){
+		$array_items = array('excel_data_array', 
+				'template_col_list_array',
+				'up_file_col_list_array');		
 		
-		if(empty($this->session->userdata('template_col_list_array')) and 
-				empty($this->session->userdata('excel_data_array'))and 
-				empty($this->session->userdata('up_file_col_list_array'))){
-			
-				$this->session->set_flashdata(
-						'error',
-						'Session Expired! Please start over again.');
-				redirect('ExcelUploader/index', 'refresh');
-				
-			
-		}
-		$step='';
-		switch($step){
-			case 'first':
-				break;
-			case 'second':
-				if(empty($this->session->userdata('template_col_list_array'))){
-					
-					$this->session->set_flashdata(
-							'error',
-							'Please select the template fields first before 
-							prceeding with other steps!');
-					redirect('ExcelUploader/index', 'refresh');
-				}
-				break;
-			case 'third':
-				
-				if(empty($this->session->userdata('excel_data_array'))){
-						
-					$this->session->set_flashdata(
-							'error',
-							'Please upload your Excel file first before
-							prceeding with other steps!');
-										
-					redirect('ExcelUploader/upload_excel_file', 'refresh');
-				}
-				break;
-			case 'four':
-				break;
-					
-		}//end switch
+		$this->session->unset_userdata($array_items);
+		
+		session_destroy();
 		
 	}//end of function
 
+	
 	
 	
 	/**
@@ -122,7 +100,13 @@ class ExcelUploader extends CI_Controller {
 	}//end of function 
 	
 	
-		
+	/**
+	 * wizard()
+	 * 
+	 * This function acts as a work flow controlelr for this app.
+	 * It basically calls relevent function on a button click
+	 * 
+	 */	
 	public function wizard(){
 		
 		$post_data = $this->input->post();
@@ -130,31 +114,42 @@ class ExcelUploader extends CI_Controller {
 		$step = (!empty($post_data['step']))?$post_data['step']:'upload';
 			
 		switch($step){
+			
 			case "template_col_select":
+				
 				$this->index();
+				
 				break;
+				
 			case "upload":
 				
 				$this->upload_excel_file();
+				
 				break;
+				
 			case 'mapping':
-				//redirect('ExcelUploader/upload_excel_file', 'refresh');
-				//$this->map_fields();
+								
 				$this->map_field_dropdowns();
+				
 				break;
+				
 			case 'preview_uploaded_data':
+				
 				$this->preview_data_grid();
-				//$this->prepare_mapped_data_array();
+							
 				break;
+				
 			case 'validate_grid':
+				
 				$this->preview_data_grid();
+				
 				break;
 						
 				
-		}//endswitch
-		
+		}//endswitch		
 		
 	}//end of function
+	
 	
 	
 	/**
@@ -184,7 +179,6 @@ class ExcelUploader extends CI_Controller {
 				
 				if($this->debug)log_message('debug','upload_excel_file():$file_data:'. print_r($file_data,true));
 				
-				//$this->map_fields();
 				$this->map_field_dropdowns();
 				
 				
@@ -200,13 +194,19 @@ class ExcelUploader extends CI_Controller {
 		}else{			
 			
 			//$this->session->set_flashdata('error',"Please upload");	
+			
 			$this->load->view('file_upload_view', $file_data);			
 		}	
 		
 	}//end of function
 		
 	
-	
+	/**
+	 * map_field_dropdowns()
+	 * 
+	 * This function calls table column and excel file column mapping page
+	 * 
+	 */
 	public function map_field_dropdowns(){
 	
 		$this->check_sessions();
@@ -250,13 +250,13 @@ class ExcelUploader extends CI_Controller {
 		
 		if(isset($post_data['btnUploadGrid'])){
 			
-			//$this->dump_data($post_data);
-			
 			//check if any corrected data is sent back to the server. If found update data arrray and 
 			//proceed to display on the grid after validation. If not then proceed to upload with stroed
 			//sesshion data
 			
 			if(isset($post_data['grid'])){
+				
+				$this->session->unset_userdata('error');
 				
 				$grid_array = $post_data['grid'];
 					
@@ -294,12 +294,8 @@ class ExcelUploader extends CI_Controller {
 			$mapped_data_array = $this->prepare_mapped_data_array();
 			
 		}//end if post
-		
-		//$this->dump_data($mapped_data_array);
-		
+				
 		$data['mapped_data_array'] = $this->validate_uploaded_data_array($mapped_data_array);
-			
-		//$data['original_up_file_data'] = $original_up_file_data;
 		
 		$data['all_fields_list'] = $all_fields_list;
 			
@@ -309,7 +305,14 @@ class ExcelUploader extends CI_Controller {
 	
 	
 
-	
+	/**
+	 * prepare_mapped_data_array()
+	 * 
+	 * This is the most important function in this app. It mapps and creates 
+	 * an array which is based on previously mapped field-column array
+	 * 
+	 * @return string
+	 */
 	private function prepare_mapped_data_array(){
 		
 		// THE KEY part!!!
@@ -365,8 +368,7 @@ class ExcelUploader extends CI_Controller {
 					
 					if($debug){
 						
-						$mapped_data_array[$rows][$index] = $formatted_cell_data."<br>ColInx:$col-FildInx:$index";
-							
+						$mapped_data_array[$rows][$index] = $formatted_cell_data."<br>ColInx:$col-FildInx:$index";							
 					}
 		
 				}else{
@@ -393,7 +395,13 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * set_mapped_data_array_in_session()
+	 * 
+	 * This function stores mappd data array in session
+	 * 
+	 * @param unknown $mapped_data_array
+	 */
 	private function set_mapped_data_array_in_session($mapped_data_array){
 		
 		$this->session->unset_userdata('mapped_data_array');
@@ -404,7 +412,13 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-		
+	/**
+	 * prepare_mapped_cols_array()
+	 * 
+	 * This function prepares mapped column-fields array
+	 * 
+	 * @return array
+	 */	
 	private function prepare_mapped_cols_array(){
 		
 		//get all select values and prepare mapped colls array
@@ -447,14 +461,17 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	private function store_mapped_fields($field_data,$column_index){
+	/**
+	 * store_mapped_fields()
+	 * 
+	 * This function stores excel column names to be mapped automatically
+	 * with field name when mapping page is opend.
+	 * 
+	 */private function store_mapped_fields($field_data,$column_index){
 		
-		//var_dump($field_data);exit;
 		$field_id = $field_data[0];
 		
 		$column_list_array = $this->get_uploaded_file_col_list();
-		
-		//$this->dump_data($column_list_array);
 		
 		//$mapped_col_name = str_replace("_", " ", $field_data[1]);
 		
@@ -485,18 +502,13 @@ class ExcelUploader extends CI_Controller {
 		}else{
 			
 			$existing_fields_list_str = trim($mapped_col_name);			
-		}
-		
+		}	
 		
 		$status = $this->ExcelUploader_model->update_entry(
 					array('MAPPED_COL_NAMES' => $existing_fields_list_str,
 						  'FIELD_ID' => $field_id)
 				);
-		
-		//$this->dump_data($status);
-		
-		//exit;
-		
+					
 	}//end of function
 	
 	
@@ -512,15 +524,11 @@ class ExcelUploader extends CI_Controller {
 	 */
 	private function get_mapped_col_info($data_col_index){
 		
-		//var_dump($data_col_index);exit;
-		
 		//first prepare all table fileds list into one array
 		
 		$all_master_field_single_array = array();
 		
 		$all_field_list_multy_array = $this->get_all_fields_array();	
-		
-		//$this->dump_data($all_field_list_multy_array);
 		
 		//make it a single multy array
 		
@@ -533,34 +541,28 @@ class ExcelUploader extends CI_Controller {
 		
 		}//end foreach
 		
-		//$this->dump_data($all_master_field_single_array);
-		
 		//get column-table field mapped array to identify appropriate mapped table field
 		
 		$mapped_col_field_array = $this->get_mapped_cols_array();
 		
-		//$this->dump_data($mapped_col_field_array);
-		
 		//now get corresponding table field info
 		
 		$field_index = $mapped_col_field_array[$data_col_index];
-		
-		//$field_index = array_search($data_col_index, $mapped_col_field_array); 
-		
-		//var_dump($field_index);exit;
-		
-		//if(array_key_exists($field_index, $all_master_field_single_array)){
-			
-			return $all_master_field_single_array[$data_col_index];//[$data_col_index];//
-			
-		//}else{
-			
-		//	return '0';
-		//}
-		
+					
+		return $all_master_field_single_array[$data_col_index];
+				
 	}//end of function
 	
 	
+	
+	/**
+	 * get_mapped_col_info_by_soap_field()
+	 * 
+	 * This function gets table field info based on given SOAP field name
+	 * 
+	 * @param string $soap_field
+	 * @return string[]
+	 */
 	private function get_mapped_col_info_by_soap_field($soap_field){	
 			
 		//first prepare all table fileds list into one array
@@ -601,14 +603,19 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * validate_uploaded_data_array()
+	 * 
+	 * This function validates and prepares error messages to be shown to end user.
+	 * If any error is found it also enables users to enter or correct data by providing
+	 * edit fields
+	 * 
+	 * @param array $data_array
+	 * @return string
+	 */
 	private function validate_uploaded_data_array($data_array){
 		
 		$debug = false;
-		
-		//$this->dump_data($data_array);
-		
-		//$all_field_list_multy_array = $this->get_all_fields_array();				
 			
 		$row_no = 1;
 		
@@ -620,15 +627,11 @@ class ExcelUploader extends CI_Controller {
 		
 		$invalid_data_col_names= array();
 		
-		foreach($data_array as $datarows=>$datacolls){
-			
-			//$this->dump_data($datacolls);
+		foreach($data_array as $datarows=>$datacolls){			
 			
 			$empty_cell_count = 0;
 			
 			foreach($datacolls as $col_index => $datacell){
-				
-				//$this->dump_data($datacell);
 				
 				$regexpattern = null;
 				
@@ -645,11 +648,7 @@ class ExcelUploader extends CI_Controller {
 				$mapped_col_info = $this->get_mapped_col_info($col_index);
 				
 				if($row_no >= 2){	
-					
-					//$this->dump_data($datacolls);					
-					
-					//$this->dump_data($mapped_col_info);
-					
+									
 					if(is_array($mapped_col_info)){
 						
 					
@@ -661,13 +660,11 @@ class ExcelUploader extends CI_Controller {
 							
 						$is_empty = $this->is_empty_cell($chk_string);
 							
-						$is_exceeded = $this->is_exceeded($chk_string,$maxchars);
-						
+						$is_exceeded = $this->is_exceeded($chk_string,$maxchars);						
 						
 						//$pattern = '/' . preg_quote($regexpattern, '/') . '/';
 						
-						$regx_result= @preg_match("/".$regexpattern."/" , $chk_string );
-						
+						$regx_result= @preg_match("/".$regexpattern."/" , $chk_string );						
 							
 						if($debug){
 								
@@ -679,6 +676,7 @@ class ExcelUploader extends CI_Controller {
 							"<br>RegX pattern:$regexpattern
 							<br>RegX result: $regx_result
 							<br>DataColInx:$col_index";
+							
 						}//end debug
 							
 						if($is_exceeded == 'Y'){
@@ -789,10 +787,6 @@ class ExcelUploader extends CI_Controller {
 			}
 				
 			$fields_str = rtrim($fields_str,', ');
-				
-			//$this->session->set_flashdata(
-			//		'error',
-			//		"Following fields data connot be empty.<br><br>$fields_str");	
 			
 			$err_msg = "Following column(s) data connot be empty.<br><br><b>$fields_str</b><br><br>";
 			
@@ -810,10 +804,6 @@ class ExcelUploader extends CI_Controller {
 			}
 			
 			$fields_str = rtrim($fields_str,', ');
-			
-			//$this->session->set_flashdata(
-			//		'error',
-			//		"Following fields contains character limit exceeded data in the cells.<br><br>$fields_str");
 			
 			$err_msg .= "Following column(s) contains data which is exceeded char limit.<br><br><b>$fields_str</b><br><br>";
 			
@@ -847,10 +837,7 @@ class ExcelUploader extends CI_Controller {
 			
 			$this->session->set_flashdata('error',$err_msg);
 							
-			//redirect('ExcelUploader/index', 'Location');
-			
-		}
-		
+		}		
 		
 		return $new_data_array;
 		
@@ -858,7 +845,14 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * is_empty_cell()
+	 * 
+	 * This function checks for empty string and return 'Y' if found else 'N'
+	 * 
+	 * @param string $data
+	 * @return string
+	 */
 	private function is_empty_cell($data){
 		
 		$data = $this->rip_tags($data);
@@ -869,8 +863,7 @@ class ExcelUploader extends CI_Controller {
 		
 		}else{
 			
-			return 'N';
-		
+			return 'N';		
 		}
 		
 	}//end of function
@@ -882,7 +875,7 @@ class ExcelUploader extends CI_Controller {
 	 * 
 	 * hhttp://php.net/manual/en/function.strip-tags.php#110280
 	 * 
-	 * @param unknown $string
+	 * @param string $string
 	 * @return string
 	 */
 	private function rip_tags($string) {
@@ -1123,14 +1116,18 @@ class ExcelUploader extends CI_Controller {
 		
 	
 	
-	
+	/**
+	 * get_all_fields_array()
+	 * 
+	 * This function returns all table fields information as a associative array
+	 * 
+	 * @return assosiative array
+	 */
 	private function get_all_fields_array(){
 	
 		$fields_dataset=$this->ExcelUploader_model->get_all_field_info();	
 		
 		$fields = array();
-		
-		//$this->dump_data($fields_dataset);
 		
 		foreach($fields_dataset as $row)
 		{
@@ -1153,7 +1150,6 @@ class ExcelUploader extends CI_Controller {
 			}
 			
 		}
-		//$this->dump_data($fields);
 		
 		return $fields;		
 	
@@ -1256,7 +1252,13 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * export_shipment_page()
+	 * 
+	 * This function opens export shipment page and makes AJAX calls to 
+	 * upload shipment details as 10 batch requests
+	 * 
+	 */
 	public function export_shipment_page(){
 		
 		//remove the first element, since its only column names
@@ -1267,11 +1269,7 @@ class ExcelUploader extends CI_Controller {
 		
 		$json_data_array = json_encode($data_array);
 		
-		//$this->dump_data(round(count($data_array)/10));
-		
 		$req_no = round(count($data_array)/10);
-		
-		//$this->dump_data($json_data_array);
 		
 		$data['json_data_array'] = $json_data_array;
 		
@@ -1291,6 +1289,11 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	/**
+	 * ajax_create_shipment()
+	 * 
+	 * This function execute batch shipment uploads using SOAP client when
+	 * a request is received. For each request this function prepares batchshipment
+	 * array using stored session excel data
 	 * 
 	 */
 	public function ajax_create_shipment(){
@@ -1332,9 +1335,7 @@ class ExcelUploader extends CI_Controller {
 			foreach($datacolls as $col_index => $datacell){
 		
 				$mapped_col_info = $this->get_mapped_col_info($col_index);
-		
-				//$this->dump_data($mapped_col_info);		
-				
+			
 				if($mapped_col_info['DATATYPE'] == 'DATE'){
 		
 					if($datacell !== ''){
@@ -1344,7 +1345,6 @@ class ExcelUploader extends CI_Controller {
 						$datacell = '0001-01-01';
 					}
 					
-					//$this->dump_data($datacell);
 				}
 				
 				$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
@@ -1410,8 +1410,11 @@ class ExcelUploader extends CI_Controller {
 				foreach($shipment_upload_responce as $result){
 						
 					$response_msg = $result->ResponseMessage;
+					
 					$error_msg = $result->ErrorMessage;
+					
 					$RequestSequence = $result->RequestSequence;
+					
 					$connote = $result->Connote;
 						
 					if($debug) $data['debug_data'] .= "<hr><br>
@@ -1455,11 +1458,11 @@ class ExcelUploader extends CI_Controller {
 			}//end if			
 						
 			$this->set_after_SOAP_response_data_array($batch_data);			
-			
 					
 		} catch (SoapFault $fault) {
 				
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
+			
 			if($debug)$data['debug_data'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
 			
 			//in case if try block fails it does not get request data from inside the 
@@ -1470,8 +1473,6 @@ class ExcelUploader extends CI_Controller {
 			$soap_response =  $client->__getLastResponse();
 			
 			$shipment_upload_responce = $soap_response;
-			
-			//var_dump($shipment_upload_responce);
 			
 			if (!is_array($shipment_upload_responce) && stripos($shipment_upload_responce, "validation errors") !== false) {
 				
@@ -1556,7 +1557,17 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
-	
+	/**
+	 * soap_response_incorporater()
+	 * 
+	 * This function gets SOAP responses and incorporate them with existing mapped excel data
+	 * array.
+	 * 
+	 * @param array $soap_response
+	 * @param array $data_row - excel data 
+	 * @param int $arr_sequence
+	 * @return array
+	 */
 	private function soap_response_incorporater($soap_response,$data_row,$arr_sequence){
 		
 		
@@ -1584,11 +1595,9 @@ class ExcelUploader extends CI_Controller {
 			
 			$data_row['SOAP_error']= '<div class="soap_error">Could not upload record. Internal Server Error'.$response_msg.'</div>';
 			
-		}else if($response_msg === 'SUCCESS'){		
+		}else if($response_msg === 'SUCCESS'){				
 			
-			
-			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.'<br>'.$connote.'</div>';
-			
+			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.'<br>'.$connote.'</div>';		
 			
 					
 		}//end if
@@ -1598,14 +1607,28 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
-	
+	/**
+	 * get_error()
+	 * 
+	 * This function gets error codes from SOAP response and prepares readable
+	 * error messages.
+	 * 
+	 * @param string $error_code
+	 * @return string
+	 */
 	private function get_error($error_code){
 		
 		$msg = null;
 		
-		$debug = true;
+		$debug = false;
 		
 		switch($error_code){
+			
+			case "Airwaybill Already Exist":
+				
+				$msg = "Airwaybill Already Exist";
+				
+				break;
 			
 			case "PICKUPNOTFOUND":
 				
@@ -1655,7 +1678,14 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * set_after_SOAP_response_data_array()
+	 * 
+	 * This function stores Excel data array after SOAP requst is made and received
+	 * responses.
+	 * 
+	 * @param array $data_array
+	 */
 	private function set_after_SOAP_response_data_array($data_array){
 		
 		$this->session->unset_userdata('after_SOAP_data_array');
@@ -1667,7 +1697,13 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	
+	/**
+	 * get_after_SOAP_response_data_array()
+	 * 
+	 * This function gets the data array which is stored after SOAP response
+	 * 
+	 * @return array
+	 */
 	private function get_after_SOAP_response_data_array(){
 	
 		$data_array = $this->session->userdata('after_SOAP_data_array');	
@@ -1676,7 +1712,17 @@ class ExcelUploader extends CI_Controller {
 			
 	}//end of function
 	
-	
+	/**
+	 * searcharray()
+	 * 
+	 * This function searches for a key in the array, 
+	 * then if found it returns its index
+	 * 
+	 * @param string $value
+	 * @param string $key
+	 * @param array $array
+	 * @return int|NULL
+	 */
 	private function searcharray($value, $key, $array) {
 		
 		foreach ($array as $k => $val) {
@@ -1692,17 +1738,14 @@ class ExcelUploader extends CI_Controller {
 	}//end of function
 	
 	
-	private function dump_data($data){
-		
-		echo '<pre>';
-		var_dump($data);
-		exit;
-	}
 	
-	
-	
-	
-	
+	/**
+	 * upload_shipment()
+	 * 
+	 * This function maks SOAP array from server side directly.
+	 * 
+	 * @param unknown $data_array
+	 */
 	public function upload_shipment($data_array){
 		
 		$data['debug_data'] = null;
@@ -1831,6 +1874,20 @@ class ExcelUploader extends CI_Controller {
 				
 	}//end of funtion
 	
+	
+	/**
+	 * dump_data()
+	 * 
+	 * This is a test tool to dump array data
+	 * 
+	 * @param array $data
+	 */
+	private function dump_data($data){
+	
+		echo '<pre>';
+		var_dump($data);
+		exit;
+	}
 	
 	
 	
