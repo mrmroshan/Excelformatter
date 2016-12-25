@@ -55,7 +55,9 @@ class Admin_model extends CI_Model {
         
         public function update_field($data)
         {                       
-               $status =  $this->db->update('field_list', $data, array(
+               $status =  $this->db->update(
+               		'field_list', 
+               		$data, array(
                 		'FIELD_ID' => $data['FIELD_ID'])
                 		);
                

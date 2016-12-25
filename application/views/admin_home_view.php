@@ -117,6 +117,7 @@ body.loading .modal {
 		    <th>Mapped SOAP Tag</th>		    
 		    <th>Auto Mapping Column Names</th>
 		    <th>Regex Pattern</th>
+		    <th>Status</th>
 		    
 		    </tr>		     
 		    </thead>
@@ -133,6 +134,7 @@ body.loading .modal {
 		    	echo '<td>'.$row['SOAP_FIELD'].'</td>';		    	
 		    	echo '<td>',$row['MAPPED_COL_NAMES'].'</td>';
 		    	echo '<td>'.$row['REGXPATTERN'].'</td>';
+		    	echo '<td>'.(($row['STATUS']==1)?'A':'I').'</td>';
 		    }
 		    ?>     
 	  		</tbody>

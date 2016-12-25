@@ -139,11 +139,12 @@ $(document).ready(function() {
 				'</p><p>errorThrown: ' + 
 				errorThrown + '</p><p>jqXHR.responseText:</p><div>'+
 				jqXHR.responseText + '</div>');
+				
                 console.log('jqXHR:');
                 console.log(jqXHR);
-                console.log('textStatus:');
-                console.log(textStatus);
-                console.log('errorThrown:');
+                console.log('statusCode:'+jqXHR.status);
+                console.log('textStatus:'+jqXHR.statusText);
+                console.log('responseText:'+jqXHR.responseText);
                 console.log(errorThrown);				
 			},
 			complete:function(result){

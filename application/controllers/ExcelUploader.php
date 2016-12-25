@@ -1105,9 +1105,13 @@ class ExcelUploader extends CI_Controller {
 	
 		foreach($all_field_list_multy_array as $categories){
 		
-			foreach($categories as $field){				
+			foreach($categories as $field){	
 				
-				$field_list_single_array[$field['FIELD_ID']] = $field['FIELD_LABEL'];				
+				if($field['STATUS']=== '1'){
+				
+					$field_list_single_array[$field['FIELD_ID']] = $field['FIELD_LABEL'];
+					
+				}
 			}
 		}
 		
@@ -1130,19 +1134,24 @@ class ExcelUploader extends CI_Controller {
 		
 		foreach($fields_dataset as $row)
 		{
-			$fields[$row['CAT_LABEL']][] = array(
-									'FIELD_ID' => $row['FIELD_ID'],
-									'CATEGORY_ID' => $row['CATEGORY_ID'],
-									'FIELD_INDEX' => $row['FIELD_INDEX'],
-									'FIELD_LABEL' => $row['FIELD_LABEL'],
-									'REQUIRED' => $row['REQUIRED'],
-									'REGXPATTERN' => $row['REGXPATTERN'],
-									'MAXCHARS' => $row['MAXCHARS'],
-									'PRECHKFIELDS' => $row['PRECHKFIELDS'],
-									'SOAP_FIELD' => $row['SOAP_FIELD'],
-									'DATATYPE' => $row['DATATYPE'],
-									'MAPPED_COL_NAMES' => $row['MAPPED_COL_NAMES']
-											);
+			if($row['STATUS'] == '1' ){
+				
+				$fields[$row['CAT_LABEL']][] = array(
+						'FIELD_ID' => $row['FIELD_ID'],
+						'CATEGORY_ID' => $row['CATEGORY_ID'],
+						'FIELD_INDEX' => $row['FIELD_INDEX'],
+						'FIELD_LABEL' => $row['FIELD_LABEL'],
+						'REQUIRED' => $row['REQUIRED'],
+						'REGXPATTERN' => $row['REGXPATTERN'],
+						'MAXCHARS' => $row['MAXCHARS'],
+						'PRECHKFIELDS' => $row['PRECHKFIELDS'],
+						'SOAP_FIELD' => $row['SOAP_FIELD'],
+						'DATATYPE' => $row['DATATYPE'],
+						'MAPPED_COL_NAMES' => $row['MAPPED_COL_NAMES'],
+						'STATUS'=> $row['STATUS']
+				);
+			}
+			
 		}
 		//$this->dump_data($fields);
 		
@@ -1297,6 +1306,12 @@ class ExcelUploader extends CI_Controller {
 		$last =  ((int)$sequence* 10);
 		
 		$data_array = $this->get_mapped_data_array_from_session();		
+		
+		$fields_count = 0;
+		
+		$soap_request = null;
+			
+		$soap_response =  null;
 				
 		//remove first column list element
 		
@@ -1307,11 +1322,7 @@ class ExcelUploader extends CI_Controller {
 		$batch_data = array_slice($data_array,$offset,10);
 		
 		//echo 'SEQUENCE:'.$sequence." first:".$first." last:".$last;
-		
-		//var_dump($batch_data);
-		
-		//return;
-		
+					
 		$i = 0;
 		
 		foreach($batch_data as $datarows=>$datacolls){
@@ -1336,11 +1347,10 @@ class ExcelUploader extends CI_Controller {
 					//$this->dump_data($datacell);
 				}
 				
-				//if($datacell !== '' ){
+				$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
+				
+				$fields_count++;
 					
-					$fields[trim($mapped_col_info['SOAP_FIELD'])] = $datacell;
-				//}
-		
 			}//end foreach
 				
 			ksort($fields);
@@ -1351,13 +1361,12 @@ class ExcelUploader extends CI_Controller {
 				
 		}//end foreach
 		
-		//echo 'SEQUENCE:'.$sequence." first:".$first." last:".$last;
+		//in result table of view file has 2 more additional columns so add extra 2
+		
+		$fields_count += 2;
 		
 		//var_dump($BATCHSHIPMENTS);
-		
-		//var_dump($batch_data);exit;
-		
-
+	
 		$CLIENTINFO = array(
 				'CodeStation'=>$this->CODESTATION,
 				'Password'=> $this->PASSWORD,
@@ -1369,29 +1378,30 @@ class ExcelUploader extends CI_Controller {
 				'CLIENTINFO'=>$CLIENTINFO,
 				'BatchShpt'=>$BATCHSHIPMENTS
 		);
+				
+		//MAKE SOUP CLIENT
 		
-		//$this->dump_data($parameters);
-		
+		$client = new SoapClient(SOAP_URL,
+				array('trace' => 1,
+						'soap_version'   => SOAP_1_1,
+						'style' => SOAP_DOCUMENT,
+						'encoding' => SOAP_LITERAL,
+						'cache_wsdl' => WSDL_CACHE_NONE
+				));
 		
 		try {
-				
-			//
-			//"http://172.53.1.34:8080/APIService/PostaWebClient.svc?wsdl"
-			$client = new SoapClient("http://168.187.136.18:8080/APIService/PostaWebClient.svc?wsdl",
-					array('trace' => 1,
-							'soap_version'   => SOAP_1_1,
-							'style' => SOAP_DOCUMENT,
-							'encoding' => SOAP_LITERAL,
-							'cache_wsdl' => WSDL_CACHE_NONE
-					));
-				
+			
 			$result = $client->BatchShipments($parameters);
+									
+			$soap_request = $client->__getLastRequest();
+			
+			$soap_response =  $client->__getLastResponse();
 				
-			if($debug) $data['debug_data'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
+			if($debug) $data['debug_data'] .=  "<pre>REQUEST:<br><textarea>" .$soap_request . "</textarea><br>";
 				
-			if($debug)$data['debug_data'] .=  "<br><pre>Response:\n" . $client->__getLastResponse() . "\n";//htmlentities(
+			if($debug)$data['debug_data'] .=  "<br><pre>Response:<br><textarea>" . $soap_response . "</textarea>";//htmlentities(
 				
-			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
+			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;			
 				
 			if(count($shipment_upload_responce)>1){
 				
@@ -1404,7 +1414,7 @@ class ExcelUploader extends CI_Controller {
 					$RequestSequence = $result->RequestSequence;
 					$connote = $result->Connote;
 						
-					$data['debug_data'] .= "<hr><br>
+					if($debug) $data['debug_data'] .= "<hr><br>
 					responce msg: $response_msg,
 					error msg: $error_msg,
 					request seq: $RequestSequence,
@@ -1429,7 +1439,7 @@ class ExcelUploader extends CI_Controller {
 					
 				$connote = $shipment_upload_responce->Connote;
 					
-				$data['debug_data'] .= "<hr><br>
+				if($debug) $data['debug_data'] .= "<hr><br>
 				responce msg: $response_msg,
 				error msg: $error_msg,
 				request seq: $RequestSequence,
@@ -1442,25 +1452,63 @@ class ExcelUploader extends CI_Controller {
 						$batch_data[$m],
 						$m);
 			
-			}//end if
-			
+			}//end if			
 						
 			$this->set_after_SOAP_response_data_array($batch_data);			
 			
 					
 		} catch (SoapFault $fault) {
 				
-			trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
+			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
 			if($debug)$data['debug_data'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
-		}		
+			
+			//in case if try block fails it does not get request data from inside the 
+			//try block so make requests data  from catch section.
+			
+			$soap_request = $client->__getLastRequest();
+				
+			$soap_response =  $client->__getLastResponse();
+			
+			$shipment_upload_responce = $soap_response;
+			
+			//var_dump($shipment_upload_responce);
+			
+			if (!is_array($shipment_upload_responce) && stripos($shipment_upload_responce, "validation errors") !== false) {
+				
+				if($debug){
+					
+					echo '<tr><td  colspan="'.$fields_count.'">Error! One or more mandatary fields data are missing!<textarea>'.$soap_request.'</textarea></td></tr>';
+					
+				}else{
+					
+					echo '<tr><td  colspan="'.$fields_count.'">Error! One or more mandatary fields data are missing!</td></tr>';
+				}
+				
+			}//end if is_array()
+			
+			exit;
+				
+		}//end catch		
 		
-		if($debug) $data['debug_data'];
-		
-		//echo $this->get_after_SOAP_response_data_array();
-		
+		if(!$debug) $data['debug_data']= null;
+					
 		$soap_responce_data = $this->get_after_SOAP_response_data_array();
 		
-		echo $this->prepare_table_html($soap_responce_data,$sequence,$data['debug_data']);
+		if(!empty($soap_responce_data) && is_array($soap_responce_data)){
+		
+			echo $this->prepare_table_html($soap_responce_data,$sequence,$data['debug_data']);
+						
+		}else{
+			
+			if($debug){
+				
+				echo '<tr><td  colspan="'.$fields_count.'">Error!<textarea>'.$soap_request.'</textarea></td></tr>';
+				
+			}else{
+			
+				echo '<tr><td  colspan="'.$fields_count.'">Error!</td></tr>';
+			}
+		}
 		
 	}//end of function
 		
@@ -1476,9 +1524,7 @@ class ExcelUploader extends CI_Controller {
 	 * @param unknown $data_array
 	 * @return string
 	 */
-	private function prepare_table_html($data_array,$sequence,$debug_data){		
-			
-		$debug = false;
+	private function prepare_table_html($data_array,$sequence,$debug_data){	
 		
 		$field_info = null;
 		
@@ -1494,11 +1540,10 @@ class ExcelUploader extends CI_Controller {
 			
 			foreach($rows as $field_id=>$value){
 					
-				$tbody .= "<td>".$value."</td>";
-				
+				$tbody .= "<td>".$value."</td>";				
 			}
 			
-			if($debug) $tbody.="<td>$debug_data</td>";
+			if(!empty($debug_data)) $tbody.="<td>$debug_data</td>";
 			
 			$tbody .= '</tr>';		
 			
@@ -1528,9 +1573,8 @@ class ExcelUploader extends CI_Controller {
 		$connote = $soap_response->Connote;
 		
 		$msg = "";
-		
-		if($response_msg === 'FAILED'){
-			
+						
+		if($response_msg === 'FAILED'){			
 			
 			$msg = $this->get_error($error_msg);
 			
@@ -1542,11 +1586,12 @@ class ExcelUploader extends CI_Controller {
 			
 		}else if($response_msg === 'SUCCESS'){		
 			
+			
 			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.'<br>'.$connote.'</div>';
+			
+			
 					
 		}//end if
-		
-		//var_dump($data_row);exit;
 		
 		return $data_row;
 		
@@ -1585,6 +1630,12 @@ class ExcelUploader extends CI_Controller {
 				$msg = "Consignee Country Code is incorrect";
 				
 				break;
+				
+			case "The ServiceCode field is required":
+				
+				$msg = "Service Code is required";
+				
+				break;
 								
 			case "Invalid CodeService":
 				
@@ -1603,6 +1654,8 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
+	
+	
 	private function set_after_SOAP_response_data_array($data_array){
 		
 		$this->session->unset_userdata('after_SOAP_data_array');
@@ -1610,6 +1663,9 @@ class ExcelUploader extends CI_Controller {
 		$this->session->set_userdata('after_SOAP_data_array',$data_array);
 		
 	}//end of function
+	
+	
+	
 	
 	
 	private function get_after_SOAP_response_data_array(){

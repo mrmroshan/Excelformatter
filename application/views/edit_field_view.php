@@ -73,7 +73,7 @@ body.loading .modal {
        
          ?>  
 		
-		<form action = "<?php echo site_url('admin/edit/'.$field_info['FIELD_INDEX']) ?>" method="post">
+		<form action = "<?php echo site_url('admin/edit/'.$field_info['FIELD_ID']) ?>" method="post" >
 			<div class="form-group row">
 			  <label for="FIELD_LABEL" class="col-md-3 col-form-label">FIELD LABEL</label>
 			  <div class="col-md-9">
@@ -87,7 +87,7 @@ body.loading .modal {
 			  <label for="FIELD_INDEX" class="col-md-3 col-form-label">FIELD INDEX</label>
 			  <div class="col-xs-3">
 			    <input class="form-control" 
-			    type="text" 
+			    type="number" 
 			    value="<?php echo $field_info['FIELD_INDEX']?>" 
 			    id="FIELD_INDEX" 
 			    name="FIELD_INDEX">
@@ -99,7 +99,7 @@ body.loading .modal {
 			  <label for="example-url-input" class="col-md-3 col-form-label">MAXCHARS</label>
 			  <div class="col-xs-3">
 			    <input class="form-control" 
-			    type="text" 
+			    type="number" 
 			    value="<?php echo $field_info['MAXCHARS']?>" 
 			    id="MAXCHARS" 
 			    name="MAXCHARS">
@@ -157,8 +157,17 @@ body.loading .modal {
 			  </div>
 			</div>		
 			
+			<div class="form-group row">
+			  <label for="REQUIRED" class="col-md-3 col-form-label">STATUS</label>
+			  <div class="col-md-9">
+			      <input type="checkbox" class="form-check-input" 
+			      id="STATUS" 
+			      name="STATUS"			      
+			      <?php echo ($field_info['STATUS']== '1')? 'CHECKED' :null?>>
+			  </div>
+			</div>		
 			
-		  <button type="submit" class="btn btn-primary">Submit</button>
+		  <button type="submit" id = "btnSubmit" name="btnSubmit" class="btn btn-primary btn-lg pull-right">Update</button>
 		</form>
 	  		  
 	</div><!--/ table wrapper -->
@@ -176,8 +185,54 @@ body.loading .modal {
 <script>
 var debug = true;
 
-$(document).ready(function() {	
+$(document).ready(function() {
+
 	
+
+	$('form').on('submit', function(e){
+		
+        e.preventDefault();
+
+		var flag = 0;
+
+		var allow_null_fields = ['MAPPED_COL_NAMES','REGXPATTERN'];
+        
+		$('form *').filter(':input').each(function(){
+
+			if(debug) console.log('name:'+this.name);
+			
+			var name = this.name;
+	
+			var value = this.value;
+			//if(debug)console.log("found:"+allow_null_fields.indexOf(name));
+
+			if(name != "btnSubmit" && allow_null_fields.indexOf(name) == -1){
+
+
+				if(debug)console.log('value:'+value);
+
+				if(value.length == 0){
+					
+					set_error(name+' '+'cannot be empty!');
+					
+					flag = 1;
+				}
+				
+			    switch (name){
+			    
+			    	case 'FIELD_LABEL':
+			    		//return false;
+				    
+				    break;
+			    }			    
+			    
+			}//end if		
+			
+		});
+
+		if(flag == 0) this.submit();
+		
+	});//end form submit
 	
 });
 
@@ -190,7 +245,8 @@ function set_error(text){
 	 text +
 	 '</div>';
 
-	 return err_html;
+	 $("#msg_div").html(err_html);
+	 
 }
 </script>
 
