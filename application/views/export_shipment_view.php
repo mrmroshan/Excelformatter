@@ -66,7 +66,18 @@ body.loading .modal {
         <div id="msg_div"></div>
         <br>
         
-         <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?>  
+        <a id = "btnFail" class = "btn btn-danger btn-lg" 
+        href="<?php echo site_url('ExcelUploader/get_failed_shipments')?>" 
+	        target="_new" >Download Faild Shipments</a>	
+	           
+        <a id = "btnSuccess" class = "btn btn-success btn-lg" 
+        href="<?php echo site_url('ExcelUploader/get_success_shipments')?>" 
+        target="_new" >Download Successful Shipments</a>        
+        
+        <br><br>
+        
+         <?php if(!empty ($this->session->flashdata('error'))){include 'error_msg.php';}?> 
+          
 		<div style="overflow:scroll;height:600px;width:100%"><!-- table wrapper -->
 		 
 		<table class="table table-bordered table table-hover" id="data_table">	
@@ -174,6 +185,8 @@ $(document).on({
                 	 "has some issues. Please check last column 'Upload Results' to see the descriptions.");
 
         	 $("#msg_div").html(error);
+
+        	 $("#btnSuccess").hide();
         }
 
         $("div.err_empty , div.err_invalid_data , div.err_exceed_limit, div.soap_error")

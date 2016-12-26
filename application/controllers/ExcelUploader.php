@@ -35,6 +35,8 @@ class ExcelUploader extends CI_Controller {
 
 		parent::__construct();
 		
+		ini_set('memory_limit','2048M');
+		
 		$config['upload_path']          = './uploads/';
 		
         $config['allowed_types']        = 'xls|xlsx|csv';
@@ -235,6 +237,8 @@ class ExcelUploader extends CI_Controller {
 				$err_msg = trim($err_msg,'</p>');
 				
 				$this->session->set_flashdata('error',$err_msg);
+				
+				$this->load->view('file_upload_view', $file_data);
 			}
 			
 		}else{			
@@ -1273,6 +1277,15 @@ class ExcelUploader extends CI_Controller {
 	 */
 	private function set_uploaded_file_col_list($excel_data_array){
 		
+		if(empty($excel_data_array[1])){
+			
+			$this->session->set_flashdata(
+					'error',
+					'Your file content is not properly formatted. Please follow the instructions.');
+			redirect('ExcelUploader/index', 'refresh');
+					
+		}
+		
 		$collist = array();
 		
 		foreach($excel_data_array[1] as $cols){
@@ -1285,9 +1298,7 @@ class ExcelUploader extends CI_Controller {
 			
 			array_pop($collist);
 		}
-		
-		//$this->dump_data($collist);
-		
+				
 		if($this->debug)log_message('debug','set_uploaded_file_col_list():$collist :'. print_r($collist,true));
 		
 		$this->session->unset_userdata('up_file_col_list_array');
@@ -1637,20 +1648,87 @@ class ExcelUploader extends CI_Controller {
 			
 			$data_row['SOAP_error']= '<div class="soap_error">'.$msg.'</div>';
 			
+			$this->set_fail_shipment_row($data_row);
+			
 		}else if($response_msg === 'INTERNAL ERROR'){	
 			
-			$data_row['SOAP_error']= '<div class="soap_error">Could not upload record. Internal Server Error'.$response_msg.'</div>';
+			$data_row['SOAP_error']= '<div class="soap_error">'.
+			'Could not upload record. Internal Server Error'.$response_msg.'</div>';
+			
+			$this->set_fail_shipment_row($data_row);
 			
 		}else if($response_msg === 'SUCCESS'){				
 			
-			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.'<br>'.$connote.'</div>';		
+			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.
+			'<br>'.$connote.'</div>';		
 			
+			$data_row['new_connote'] = $connote;
+			
+			$this->set_success_shipment_row($data_row);
 					
 		}//end if
 		
 		return $data_row;
 		
 	}//end of function
+	
+	
+	
+	
+	private function set_success_shipment_row($shipment_array){
+		
+		$shipment_data = $this->get_success_shipment_row();
+		
+		$shipment_data[] = $shipment_array;		
+		
+		$this->session->set_userdata('success_shipments',$shipment_data);
+		
+	}//end of function
+	
+	
+	
+	private function set_fail_shipment_row($shipment_array){
+			
+		$fail_shipment_data = $this->get_fail_shipment_row();
+		
+		$fail_shipment_data[] = $shipment_array;
+	
+		$this->session->set_userdata('fail_shipments',$fail_shipment_data);
+	
+	}//end of function
+	
+	
+	
+	private function get_fail_shipment_row(){
+	
+		return $this->session->userdata("fail_shipments");
+	}
+	
+	
+	private function get_success_shipment_row(){
+	
+		return $this->session->userdata("success_shipments");
+	}
+	
+	
+	public function get_failed_shipments(){
+		
+		$faild_shipments_array = $this->get_fail_shipment_row();
+		
+		$this->create_excel_file($faild_shipments_array,'fail');
+		
+	}//end of function
+	
+	
+	
+	public function get_success_shipments(){
+	
+		$success_shipments_array = $this->get_success_shipment_row();
+	
+		$this->create_excel_file($success_shipments_array,'success');
+	
+	}//end of function
+	
 	
 	
 	/**
@@ -2025,51 +2103,79 @@ class ExcelUploader extends CI_Controller {
 	
 	
 	
-	public function create_template(){
+	private function create_excel_file($data_array,$type){
 
-			$get = $this->input->get();
-
+			$new_array = array();
+			
 			//load our new PHPExcel library
+			
 			$this->load->library('excel');
+			
 			//activate worksheet number 1
+			
 			$this->excel->setActiveSheetIndex(0);
+			
 			//name the worksheet
+			
 			$this->excel->getActiveSheet()->setTitle('Data Upload Template');
-			//set cell A1 content with some text
+			
+			$new_array = $this->get_uploaded_file_col_list();
+			
+			//$new_array = $this->get_all_fields_array();
+			
+			//array_unshift($data_array, $new_array);
+			
+			$new_array = $data_array;
+			//echo '<pre>';	var_dump($new_array);exit;
+		
+			$row_no = 1;
+
+			foreach($new_array as $row=>$cols){
 				
-			if(!empty($get['col_list'])){
-
-				//$col_list_array = json_decode( urldecode($get['col_list']) );
-				$col_list_str = urldecode($get['col_list']);
-
-				$col_list_array = explode('---',$col_list_str);
+				$col_idx = 0;
 				
-				array_pop ($col_list_array);//remove last element
-				//var_dump($col_list_array);exit;
-				$i = 0;
-
-				foreach($col_list_array as $col){
-
+				foreach($cols as $data){
+					
 					//$this->excel->getActiveSheet()->setCellValue($i.'1', $col);
-					$this->excel->getActiveSheet()->setCellValueByColumnAndRow($i, 1, $col);
-					$i++;
-				}//endforeach
+					
+					$data = $this->rip_tags($data);
+					
+					$this->excel->getActiveSheet()->setCellValueByColumnAndRow($col_idx, $row_no, $data);
+					
+					$col_idx++;
+				}
+				
+				$row_no++;
+				
+			}//endforeach
 
-				$filename='data_upload_template.xls'; //save our workbook as this file name
-				header('Content-Type: application/vnd.ms-excel'); //mime type
-				header('Content-Disposition: attachment;filename="'.$filename.'"'); //tell browser what's the file name
-				header('Cache-Control: max-age=0'); //no cache
+			if($type =='success'){
+				
+				$filename = 'successful_shipment.xls';
+				
+			}else{
+				
+				$filename = 'failed_shipment.xls';
+				
+			}
+			
+			header('Content-Type: application/vnd.ms-excel'); //mime type
+			
+			header('Content-Disposition: attachment;filename="'.$filename.'"'); //tell browser what's the file name
+			
+			header('Cache-Control: max-age=0'); //no cache
 
-				//save it to Excel5 format (excel 2003 .XLS file), change this to 'Excel2007' 
-				//(and adjust the filename extension, also the header mime type)
-				//if you want to save it as .XLSX Excel 2007 format
-				$objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel5'); 
+			//save it to Excel5 format (excel 2003 .XLS file), change this to 'Excel2007' 
+			//(and adjust the filename extension, also the header mime type)
+			//if you want to save it as .XLSX Excel 2007 format
+			
+			$objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel5'); 
 
-				//force user to download the Excel file without writing it to server's HD
-				$objWriter->save('php://output');
-
-			}//end if	
-			 redirect('ExcelUploader/index', 'refresh');	
+			//force user to download the Excel file without writing it to server's HD
+			
+			$objWriter->save('php://output');
+			
+			redirect('ExcelUploader/index', 'refresh');	
 
 	}//end of function
 	
