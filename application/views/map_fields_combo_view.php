@@ -16,7 +16,7 @@ include("header.php")
 	      Labels which are in red color are mandatory fields.
 	      <br>
 	      After mapping the fields please click on <b>'Next'</b> button at the bottom to proceed to next page to verify data.<br>
-	      If you have mistakenly uploaded a wrong file, then click on <b>'Previous'</b> button to go to file upload page.
+	      If you have mistakenly uploaded a wrong file, click on <b>'Previous'</b> button to go to file upload page.
 	       
 	      </p>
 	      <hr>
