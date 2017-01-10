@@ -62,38 +62,7 @@ body.loading .modal {
     <div class="panel-body">
     <?php 
     //echo '<pre>';var_dump($results);
-    /*
-     *  [0]=>
-  array(14) {
-    ["FIELD_ID"]=>
-    string(2) "55"
-    ["CATEGORY_ID"]=>
-    string(1) "1"
-    ["FIELD_INDEX"]=>
-    string(1) "0"
-    ["FIELD_LABEL"]=>
-    string(6) "SRL No"
-    ["REQUIRED"]=>
-    string(1) "1"
-    ["REGXPATTERN"]=>
-    string(7) "^[0-9]$"
-    ["MAXCHARS"]=>
-    string(2) "10"
-    ["PRECHKFIELDS"]=>
-    string(0) ""
-    ["SOAP_FIELD"]=>
-    string(15) "RequestSequence"
-    ["DATATYPE"]=>
-    string(3) "INT"
-    ["MAPPED_COL_NAMES"]=>
-    string(13) "Srl No|Srl.No"
-    ["ID"]=>
-    string(1) "1"
-    ["CATEGORY"]=>
-    string(3) "AWB"
-    ["CAT_LABEL"]=>
-    string(8) "AWB INFO"
-  }*/
+    
     ?>
     <h3></h3>
             
