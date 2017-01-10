@@ -67,12 +67,12 @@ class ExcelUploader extends CI_Controller {
 				empty($this->session->userdata('ACCOUNTNO'))and
 				empty($this->session->userdata('USERNAME')) and
 				empty($this->session->userdata('PASSWORD'))){
-						
+
 					//redirect('ExcelUploader/index', 'refresh');
 					redirect('ExcelUploader/index?login_data='.$this->session->userdata('login_data'));
-						
+
 		}else{
-				
+
 			return true;
 		}
 
@@ -108,10 +108,10 @@ class ExcelUploader extends CI_Controller {
 					$this->session->set_flashdata(
 							'error',
 							'Session Expired! Please start over again.');
-						
+
 					//redirect('ExcelUploader/index', 'refresh');
 					redirect('ExcelUploader/index?login_data='.$this->session->userdata('login_data'));
-						
+
 		}
 			
 	}//end of function
@@ -129,7 +129,7 @@ class ExcelUploader extends CI_Controller {
 		//http://localhost:8080/shipment_uploader/index.php/ExcelUploader/?login_data=S1dJOlRlc3Q3NDc0OnNoYXJlZWZzaDpzaHI=
 
 		$enc_login_data = $this->input->get('login_data');
-		
+
 		$login_data = base64_decode($enc_login_data);
 
 		if(!empty($login_data)){
@@ -173,7 +173,7 @@ class ExcelUploader extends CI_Controller {
 		$step = (!empty($post_data['step']))?$post_data['step']:'upload';
 			
 		switch($step){
-				
+
 			case "template_col_select":
 
 				$this->index();
@@ -181,6 +181,11 @@ class ExcelUploader extends CI_Controller {
 				break;
 
 			case "upload":
+
+				// cleare stored previoiusly mapped sessions if any
+					
+				$this->session->unset_userdata('mapped_form_element');
+					
 
 				$this->upload_excel_file();
 
@@ -226,13 +231,13 @@ class ExcelUploader extends CI_Controller {
 		$file_element = (!empty($_FILES['userfile']['name']))?$_FILES['userfile']:null;
 
 		if(!empty($file_element)){
-				
+
 			$file_data = $this->upload();
-				
+
 			if(!array_key_exists('error',$file_data)){
 
 				$excel_read = $this->extract_excel_file_data($file_data['upload_data']);
-				
+
 				//now delete uploaded file from disk
 
 				@delete_files($file_data['upload_data']['file_path']);
@@ -240,20 +245,20 @@ class ExcelUploader extends CI_Controller {
 				if($this->debug)log_message('debug','upload_excel_file():$file_data:'. print_r($file_data,true));
 
 				if($excel_read){
-					
+						
 					$this->session->unset_userdata('error');
-					
+						
 					$this->map_field_dropdowns();
-					
+						
 				}else{
-					
+						
 					$this->session->set_flashdata(
 							'error',
 							'Uploaded file contains empty row at the top or empty column at the beginning.'.
-							' Please remove them as shown at the bottom images and re upload the file');					
-					
-					$this->load->view("file_upload_view");				
-					
+							' Please remove them as shown at the bottom images and re upload the file');
+						
+					$this->load->view("file_upload_view");
+						
 				}
 
 			}else{
@@ -266,18 +271,18 @@ class ExcelUploader extends CI_Controller {
 
 				$this->load->view('file_upload_view', $file_data);
 			}
-				
+
 		}else{
-				
+
 			//$this->session->set_flashdata('error',"Please upload");
-				
+
 			$this->load->view('file_upload_view', $file_data);
 		}
 
 	}//end of function
 
-	
-	
+
+
 
 	/**
 	 * map_field_dropdowns()
@@ -294,9 +299,9 @@ class ExcelUploader extends CI_Controller {
 		$up_file_col_list = $this->get_uploaded_file_col_list();
 
 		$data['up_file_col_list'] = $up_file_col_list;
-		
+
 		// this is to auto select element values which are previously mapped.
-		
+
 		$data['mapped_form_elements'] = $this->get_mapped_form_element_from_session();
 
 		if($this->debug)log_message('debug','map_field_dropdowns():$up_file_col_list:'. print_r($up_file_col_list,true));
@@ -329,15 +334,15 @@ class ExcelUploader extends CI_Controller {
 		$all_fields_list = $this->get_all_fields_single_array();
 
 		$post_data = $this->input->post();
-		
+
 		$this->set_mapped_form_element_session($post_data);
 
 		if(isset($post_data['btnUploadGrid'])){
-				
+
 			//check if any corrected data is sent back to the server. If found update data arrray and
 			//proceed to display on the grid after validation. If not then proceed to upload with stroed
 			//sesshion data
-				
+
 			if(isset($post_data['grid'])){
 
 				$this->session->unset_userdata('error');
@@ -370,13 +375,13 @@ class ExcelUploader extends CI_Controller {
 
 				return;
 			}
-				
+
 		}else{
-				
+
 			$mapped_cols_array = $this->prepare_mapped_cols_array();
-				
+
 			$mapped_data_array = $this->prepare_mapped_data_array();
-				
+
 		}//end if post
 
 		$data['mapped_data_array'] = $this->validate_uploaded_data_array($mapped_data_array);
@@ -387,28 +392,28 @@ class ExcelUploader extends CI_Controller {
 
 	}//end of function
 
-	
-	
-	
+
+
+
 	private function set_mapped_form_element_session($mapped_form_element){
-		
+
 		$this->session->unset_userdata('mapped_form_element');
-		
+
 		$this->session->set_userdata('mapped_form_element',$mapped_form_element);
-		
+
 	}//end of function
 
-	
-	
+
+
 	private function get_mapped_form_element_from_session(){
-	
+
 		return $this->session->userdata('mapped_form_element');
-	
+
 	}//end of function
-	
-	
-	
-	
+
+
+
+
 
 	/**
 	 * prepare_mapped_data_array()
@@ -441,9 +446,9 @@ class ExcelUploader extends CI_Controller {
 		$mapped_data_array = array();
 
 		foreach($original_up_file_data as $rows=>$cols){
-				
+
 			//$this->dump_data($cols);
-				
+
 			foreach($mapped_cols_array as $index=>$col){
 
 				//$this->dump_data($mapped_cols_array);
@@ -468,9 +473,9 @@ class ExcelUploader extends CI_Controller {
 							$formatted_cell_data);
 
 					$formatted_cell_data = $this->rip_tags($formatted_cell_data);
-						
+
 					$mapped_data_array[$rows][$index] = $formatted_cell_data;
-						
+
 					if($debug){
 
 						$mapped_data_array[$rows][$index] = $formatted_cell_data."<br>ColInx:$col-FildInx:$index";
@@ -479,7 +484,7 @@ class ExcelUploader extends CI_Controller {
 				}else{
 
 					$mapped_data_array[$rows][$index] = '';
-						
+
 					if($debug){
 
 						$mapped_data_array[$rows][$index] = "<br>ExColInx:$col-FildInx:$index";
@@ -535,15 +540,15 @@ class ExcelUploader extends CI_Controller {
 		$mapped_field_name = null;
 
 		foreach($post_data as $field=>$value){
-				
+
 			$field_id_array = array();
-				
+
 			if( $value != 'Next' &&  $value !== 'preview_uploaded_data' && $field != ""){
 
 				$field_id_array = explode("-",$field); // array(2) { [0]=> string(1) "2" [1]=> string(11) "Airway_Bill" }
 
 				if($value !== ''){
-						
+
 					$this->store_mapped_fields($field_id_array,$value);
 				}
 
@@ -588,25 +593,25 @@ class ExcelUploader extends CI_Controller {
 		$existing_fields_list_array = explode("|", $existing_fields_list_str['MAPPED_COL_NAMES']);
 
 		if(empty(end($existing_fields_list_array))){
-				
+
 			array_pop($existing_fields_list_array);
 		}
 
 		//check if its already existing
 
 		if(in_array($mapped_col_name,$existing_fields_list_array)){
-				
+
 			return;
 		}
 
 		//$this->dump_data($existing_fields_list_array);
 
 		if(!empty($existing_fields_list_str['MAPPED_COL_NAMES'])){
-				
+
 			$existing_fields_list_str = $existing_fields_list_str['MAPPED_COL_NAMES'] .'|'.trim($mapped_col_name);
-				
+
 		}else{
-				
+
 			$existing_fields_list_str = trim($mapped_col_name);
 		}
 
@@ -689,17 +694,17 @@ class ExcelUploader extends CI_Controller {
 		}//end foreach
 
 		foreach($all_master_field_single_array as $field_id => $field_infos){
-				
+
 			//var_dump($field_infos);exit;
-				
+
 			foreach($field_infos as $field_name=>$field_value){
 
 				if($field_name=='SOAP_FIELD' && $field_value == $soap_field){
-						
+
 					return $field_infos;
 
 				}else if($soap_field == 'SOAP_error'){
-						
+
 					return array('FIELD_ID'=>'SOAP_error');
 				}
 			}
@@ -734,9 +739,9 @@ class ExcelUploader extends CI_Controller {
 		$invalid_data_col_names= array();
 
 		foreach($data_array as $datarows=>$datacolls){
-				
+
 			$empty_cell_count = 0;
-				
+
 			foreach($datacolls as $col_index => $datacell){
 
 				$regexpattern = null;
@@ -754,7 +759,7 @@ class ExcelUploader extends CI_Controller {
 				$mapped_col_info = $this->get_mapped_col_info($col_index);
 
 				if($row_no >= 2){
-						
+
 					if(is_array($mapped_col_info)){
 
 							
@@ -782,7 +787,7 @@ class ExcelUploader extends CI_Controller {
 							"<br>RegX pattern:$regexpattern
 							<br>RegX result: $regx_result
 							<br>DataColInx:$col_index";
-								
+
 						}//end debug
 							
 						if($is_exceeded == 'Y'){
@@ -808,13 +813,13 @@ class ExcelUploader extends CI_Controller {
 									$datacell = '<div class="err_empty">
 													<textarea name="grid['.$row_no.']['.$col_index.']" cols="10" rows="2">'.
 													$chk_string.'</textarea></div>';
-														
+
 													if(!empty($regexpattern)){
 															
 														if($regx_result == 0 ){
 
 															$chk_string = $this->rip_tags($chk_string);
-																
+
 															$invalid_data_col_names[$mapped_col_info['FIELD_INDEX']] = $mapped_col_info['FIELD_LABEL'];
 
 															$datacell = '<div class="err_invalid_data">
@@ -863,17 +868,17 @@ class ExcelUploader extends CI_Controller {
 
 						$new_data_array[$row_no][$col_index] = $datacell.$debug_data;
 					}
-						
+
 				}else{
-						
+
 					//first row shows excel sheets column headers
-						
+
 					$new_data_array[$row_no][$col_index] = $datacell;
-						
+
 				}
 
 			}//end foreach
-				
+
 			$row_no++;
 		}//end foreach
 
@@ -884,39 +889,39 @@ class ExcelUploader extends CI_Controller {
 		//set errro messages for required field empty strings
 
 		if(!empty($flagd_empty_col_names)){
-				
+
 			$fields_str = null;
-				
+
 			foreach($flagd_empty_col_names as $col){
 					
 				$fields_str .= $col.', ';
 			}
 
 			$fields_str = rtrim($fields_str,', ');
-				
+
 			$err_msg = "Following column(s) data connot be empty.<br><br><b>$fields_str</b><br><br>";
-				
+
 		}//end if
 
 		//set error message for limit exceeds
 
 		if(!empty($flagd_col_names)){
-				
+
 			$fields_str = null;
-				
+
 			foreach($flagd_col_names as $index => $col_info){
 
 				$fields_str .= $col_info['label'].' max char limit is '.$col_info['limit'].', ';
 			}
-				
+
 			$fields_str = rtrim($fields_str,', ');
-				
+
 			$err_msg .= "Following column(s) contains data which is exceeded char limit.<br><br><b>$fields_str</b><br><br>";
-				
+
 		}
 
 		if(!empty($invalid_data_col_names)){
-				
+
 			$fields_str = null;
 
 			foreach($invalid_data_col_names as $index => $col_info){
@@ -925,24 +930,24 @@ class ExcelUploader extends CI_Controller {
 			}
 
 			$fields_str = rtrim($fields_str,', ');
-				
+
 			$err_msg .= "Following column(s) contains invalid data cells.<br><br><b>$fields_str</b><br>";
 
 		}
 
 		if(!empty($err_msg)){
-				
+
 			$this->session->set_flashdata('error',$err_msg);
 
 		}
 
 		if($empty_cell_count > 500){
-				
+
 			$err_msg .= "<br><b>This file contains too many empty values for required column(s)
 													Please edit the file and then re upload</b>";
-				
+
 			$this->session->set_flashdata('error',$err_msg);
-				
+
 		}
 
 		return $new_data_array;
@@ -964,11 +969,11 @@ class ExcelUploader extends CI_Controller {
 		$data = $this->rip_tags($data);
 
 		if($data === ""){
-				
+
 			return 'Y';
 
 		}else{
-				
+
 			return 'N';
 		}
 
@@ -1024,13 +1029,13 @@ class ExcelUploader extends CI_Controller {
 		$result = 'N';
 
 		if((int)$len > (int)$max){
-				
+
 			$result =  'Y';
-				
+
 		}else{
-				
+
 			$result = 'N';
-				
+
 		}
 
 		return $result;
@@ -1055,7 +1060,7 @@ class ExcelUploader extends CI_Controller {
 		if(!$upload_feedback ){
 
 			$data = array('error'=> $this->upload->display_errors());
-				
+
 			$this->session->set_flashdata(
 					'error',
 					$this->upload->display_errors());
@@ -1120,16 +1125,16 @@ class ExcelUploader extends CI_Controller {
 		//remove empty rows
 
 		foreach($excel_data_array as $rows=>$cols){
-				
+
 			$empty_cell_count = 0;
-				
+
 			foreach($cols as $cell){
 
 				if(empty($cell)) $empty_cell_count++;
 			}
-				
+
 			//echo $empty_cell_count.$rows."<br>";
-				
+
 			if($empty_cell_count == count($cols)){
 
 				//array_splice($excel_data_array,$rows-1);
@@ -1146,15 +1151,15 @@ class ExcelUploader extends CI_Controller {
 		if($this->debug)log_message('debug','extract_excel_file_data():$excel_data_array :'. print_r($excel_data_array,true));
 
 		//check if first row is empty or not
-		
+
 		if(empty($excel_data_array[1])){
-		
+
 			return false;
-			
+				
 		}//end if
-		
+
 		$this->set_uploaded_file_col_list($excel_data_array);
-		
+
 		return true;
 
 	}//end of function
@@ -1219,7 +1224,7 @@ class ExcelUploader extends CI_Controller {
 				if($field['STATUS']=== '1'){
 
 					$field_list_single_array[$field['FIELD_ID']] = $field['FIELD_LABEL'];
-						
+
 				}
 			}
 		}
@@ -1264,7 +1269,7 @@ class ExcelUploader extends CI_Controller {
 						'STATUS'=> $row['STATUS']
 				);
 			}
-				
+
 		}
 
 		return $fields;
@@ -1343,25 +1348,25 @@ class ExcelUploader extends CI_Controller {
 	 */
 	private function set_uploaded_file_col_list($excel_data_array){
 			
-			$collist = array();
+		$collist = array();
 			
-			foreach($excel_data_array[1] as $cols){
-			
-				$collist[] = $cols;
-			
-			}//endforeach
-			
-			if(empty(end($collist))){
-			
-				array_pop($collist);
-			}
-			
-			if($this->debug)log_message('debug','set_uploaded_file_col_list():$collist :'. print_r($collist,true));
-			
-			$this->session->unset_userdata('up_file_col_list_array');
-			
-			$this->session->set_userdata('up_file_col_list_array',$collist);
+		foreach($excel_data_array[1] as $cols){
 				
+			$collist[] = $cols;
+				
+		}//endforeach
+			
+		if(empty(end($collist))){
+				
+			array_pop($collist);
+		}
+			
+		if($this->debug)log_message('debug','set_uploaded_file_col_list():$collist :'. print_r($collist,true));
+			
+		$this->session->unset_userdata('up_file_col_list_array');
+			
+		$this->session->set_userdata('up_file_col_list_array',$collist);
+
 
 	}//end of function
 
@@ -1458,26 +1463,26 @@ class ExcelUploader extends CI_Controller {
 					}else {
 						$datacell = '0001-01-01';
 					}
-						
+
 				}else if($mapped_col_info['DATATYPE'] =='FLOAT'){
-					
+						
 					if($datacell == '' || empty($datacell)){
-						
+
 						$datacell = 0.00 ;
-						
+
 					}else{
-						
+
 						$datacell = floatval($datacell);
 					}
-					
+						
 				}else if($mapped_col_info['DATATYPE'] =='INT'){
-					
+						
 					if($datacell == '' || empty($datacell)){
-						
+
 						$datacell = 0 ;
-						
+
 					}else{
-						
+
 						$datacell = intval($datacell);
 					}
 				}
@@ -1546,11 +1551,11 @@ class ExcelUploader extends CI_Controller {
 				));
 
 		try {
-				
+
 			$result = $client->BatchShipments($parameters);
-				
+
 			$soap_request = $client->__getLastRequest();
-				
+
 			$soap_response =  $client->__getLastResponse();
 
 			if($debug) $data['debug_data'] .=  "<pre>REQUEST:<br><textarea>" .$soap_request . "</textarea><br>";
@@ -1566,11 +1571,11 @@ class ExcelUploader extends CI_Controller {
 				foreach($shipment_upload_responce as $result){
 
 					$response_msg = $result->ResponseMessage;
-						
+
 					$error_msg = $result->ErrorMessage;
-						
+
 					$RequestSequence = $result->RequestSequence;
-						
+
 					$connote = $result->Connote;
 
 					if($debug) $data['debug_data'] .= "<hr><br>
@@ -1578,14 +1583,14 @@ class ExcelUploader extends CI_Controller {
 					error msg: $error_msg,
 					request seq: $RequestSequence,
 					connote: $connote";
-						
+
 					$batch_data[$m]= $this->soap_response_incorporater(
 							$result,
 							$batch_data[$m],
 							$m);
 
 					$m++;
-						
+
 				}//end foreach
 					
 			}else{
@@ -1614,35 +1619,35 @@ class ExcelUploader extends CI_Controller {
 			}//end if
 
 			$this->set_after_SOAP_response_data_array($batch_data);
-				
+
 		} catch (SoapFault $fault) {
 
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-				
+
 			if($debug)$data['debug_data'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
-				
+
 			//in case if try block fails it does not get request data from inside the
 			//try block so make requests data  from catch section.
-				
+
 			$soap_request = $client->__getLastRequest();
 
 			$soap_response =  $client->__getLastResponse();
-				
+
 			$shipment_upload_responce = $soap_response;
-				
+
 			if (!is_array($shipment_upload_responce) && stripos($shipment_upload_responce, "validation errors") !== false) {
 
 				if($debug){
-						
+
 					echo '<tr><td  colspan="'.$fields_count.'">Error! One or more mandatary SOAP fields data are missing!<textarea>'.$soap_request.'</textarea></td></tr>';
-						
+
 				}else{
-						
+
 					echo '<tr><td  colspan="'.$fields_count.'">Error! One or more mandatary SOAP fields data are missing!</td></tr>';
 				}
 
 			}//end if is_array()
-				
+
 			exit;
 
 		}//end catch
@@ -1656,7 +1661,7 @@ class ExcelUploader extends CI_Controller {
 			echo $this->prepare_table_html($soap_responce_data,$sequence,$data['debug_data']);
 
 		}else{
-				
+
 			if($debug){
 
 				echo '<tr><td  colspan="'.$fields_count.'">Error!<textarea>'.$soap_request.'</textarea></td></tr>';
@@ -1694,18 +1699,18 @@ class ExcelUploader extends CI_Controller {
 		foreach($data_array as $rows){
 
 			//$tbody .= '<td>'.$i.'</td>';
-				
+
 			foreach($rows as $field_id=>$value){
 					
 				$tbody .= "<td>".$value."</td>";
 			}
-				
+
 			if(!empty($debug_data)) $tbody.="<td>$debug_data</td>";
-				
+
 			$tbody .= '</tr>';
-				
+
 			$i++;
-				
+
 		}//end foreach
 
 		return $tbody;
@@ -1740,33 +1745,33 @@ class ExcelUploader extends CI_Controller {
 		$connote = $soap_response->Connote;
 
 		$msg = "";
-		
+
 		if($response_msg === 'FAILED'){
-				
+
 			$msg = $this->get_error($error_msg);
-				
+
 			$data_row['SOAP_error']= '<div class="soap_error">FAIL</div>';
-			
+				
 			$data_row['new_connote'] = $msg;
-				
+
 			$this->set_fail_shipment_row($data_row);
-				
+
 		}else if($response_msg === 'INTERNAL ERROR'){
-				
+
 			$data_row['SOAP_error']= '<div class="soap_error">FAIL</div>';
-			
+				
 			$data_row['new_connote'] = 'Could not upload record. Internal Server Error<BR>'.$response_msg;
-				
+
 			$this->set_fail_shipment_row($data_row);
-				
+
 		}else if($response_msg === 'SUCCESS'){
-				
+
 			$data_row['SOAP_error']= '<div class="soap_success">'.$response_msg.'</div>';
-				
+
 			$data_row['new_connote'] = $connote;
-				
+
 			$this->set_success_shipment_row($data_row);
-				
+
 		}//end if
 
 		return $data_row;
@@ -1829,7 +1834,7 @@ class ExcelUploader extends CI_Controller {
 
 	}//end of function
 
-	
+
 
 	/**
 	 * get_error()
@@ -1846,53 +1851,53 @@ class ExcelUploader extends CI_Controller {
 
 		$debug = true;
 		/*
-		switch($error_code){
-				
+		 switch($error_code){
+
 			case "Airwaybill Already Exist":
 
-				$msg = "Airwaybill Already Exist";
+			$msg = "Airwaybill Already Exist";
 
-				break;
-					
+			break;
+				
 			case "PICKUPNOTFOUND":
 
-				$msg = "PICKUP number is not found.";
+			$msg = "PICKUP number is not found.";
 
-				break;
+			break;
 
 			case "JCSNOPICKUP":
-					
-				$msg = "Either JCS or PICKUP number is incorrect.";
-					
-				break;
+				
+			$msg = "Either JCS or PICKUP number is incorrect.";
+				
+			break;
 
 			case"Invalid ConsigneeProvinceCode":
 
-				$msg = "Consignee Provice Code is incorrect";
+			$msg = "Consignee Provice Code is incorrect";
 
-				break;
+			break;
 
 			case "Invalid ConsigneeCountryCode":
 
-				$msg = "Consignee Country Code is incorrect";
+			$msg = "Consignee Country Code is incorrect";
 
-				break;
+			break;
 
 			case "The ServiceCode field is required":
 
-				$msg = "Service Code is required";
+			$msg = "Service Code is required";
 
-				break;
+			break;
 
 			case "Invalid CodeService":
 
-				$msg = "Service Code is incorrect";
+			$msg = "Service Code is incorrect";
 
-				break;
+			break;
 
 
-		}//end switch
-		*/
+			}//end switch
+			*/
 
 		if($debug) $msg.= $error_code;
 
@@ -1951,7 +1956,7 @@ class ExcelUploader extends CI_Controller {
 	private function searcharray($value, $key, $array) {
 
 		foreach ($array as $k => $val) {
-				
+
 			if ($val[$key] == $value) {
 
 				return $k;
@@ -1981,11 +1986,11 @@ class ExcelUploader extends CI_Controller {
 		$i = 0;
 
 		foreach($data_array as $datarows=>$datacolls){
-				
+
 			//$BATCHSHIPMENTS['BATCHSHIPMENTS'] = array();
-				
+
 			$fields = array();
-				
+
 			foreach($datacolls as $col_index => $datacell){
 
 				$mapped_col_info = $this->get_mapped_col_info($col_index);
@@ -2004,13 +2009,13 @@ class ExcelUploader extends CI_Controller {
 				//}
 
 			}//end foreach
-				
+
 			ksort($fields);
 
 			$BATCHSHIPMENTS[$i] = $fields;
-				
+
 			$i++;
-				
+
 		}//end foreach
 
 		array_shift($BATCHSHIPMENTS);//remove first elemtn and keys from the array
@@ -2033,7 +2038,7 @@ class ExcelUploader extends CI_Controller {
 		//$this->dump_data($parameters1);
 
 		try {
-				
+
 			//
 			//
 			$client = new SoapClient(SOAP_URL,
@@ -2043,24 +2048,24 @@ class ExcelUploader extends CI_Controller {
 							'encoding' => SOAP_LITERAL,
 							'cache_wsdl' => WSDL_CACHE_NONE
 					));
-				
+
 			$result = $client->BatchShipments($parameters1);
-				
+
 			$data['debug_data'] .=  "<pre>REQUEST:\n" . htmlentities($client->__getLastRequest()) . "\n";
-				
+
 			$data['debug_data'] .=  "<br><pre>Response:\n" . htmlentities($client->__getLastResponse()) . "\n";//htmlentities(
-				
+
 			$shipment_upload_responce = $result->BatchShipmentsResult->SHIPMENT_INFO;
-				
+
 			if(count($shipment_upload_responce)>1){
 					
 				foreach($shipment_upload_responce as $result){
-						
+
 					$response_msg = $result->ResponseMessage;
 					$error_msg = $result->ErrorMessage;
 					$RequestSequence = $result->RequestSequence;
 					$connote = $result->Connote;
-						
+
 					$data['debug_data'] .= "<hr><br>
 					responce msg: $response_msg,
 					error msg: $error_msg,
@@ -2091,7 +2096,7 @@ class ExcelUploader extends CI_Controller {
 			}
 
 		} catch (SoapFault $fault) {
-				
+
 			//trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
 			$data['debug_data'] .= 'Error! '."SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})";
 		}
@@ -2101,11 +2106,11 @@ class ExcelUploader extends CI_Controller {
 	}//end of funtion
 
 
-	
-	
+
+
 	/**
 	 * test_data()
-	 * 
+	 *
 	 */
 	private function test_data(){
 
@@ -2162,17 +2167,17 @@ class ExcelUploader extends CI_Controller {
 	}//end of test data
 
 
-	
-	
+
+
 
 	private function create_excel_file($data_array,$type){
 
 		//var_dump($data_array);exit;
-		
+
 		$new_array = array();
-		
+
 		$cols_array = array();
-					
+			
 		//load our new PHPExcel library
 			
 		$this->load->library('excel');
@@ -2186,44 +2191,48 @@ class ExcelUploader extends CI_Controller {
 		$this->excel->getActiveSheet()->setTitle('Data Upload Template');
 			
 		//get uploaded file columns array
-		
+
 		$up_file_col_array = $this->get_uploaded_file_col_list();
-				
-		$mapped_col_array = $this->get_mapped_cols_array();				
-		
+
+		$mapped_col_array = $this->get_mapped_cols_array();
+
 		foreach($mapped_col_array as $field_id => $col_id){
-			
-			//get field info 
-			
-			$field_info = $this->get_mapped_col_info($field_id);
-			
-			//get column info			
-			
-			$cols_array[] = $field_info['FIELD_LABEL'];					
-			
-		}//end foreach
-		
-		 array_push($new_array, $cols_array);	
-		
-		 $cols_array2 = array();
-		 
-		foreach($mapped_col_array as $field_id => $col_id){				
-			
-			//get column info
-		
-			$cols_array2[] = (!empty($up_file_col_array[$col_id]))?$up_file_col_array[$col_id]:null;				
 				
-		}//end foreach	
-		
-		array_push($new_array, $cols_array2);
-		
-		foreach($data_array as $row){
+			//get field info
+				
+			$field_info = $this->get_mapped_col_info($field_id);
+				
+			//get column info
+				
+			$cols_array[] = $field_info['FIELD_LABEL'];
+				
+		}//end foreach
+
+		$cols_array[] = 'Upload Results';
+
+		$cols_array[] = 'New Airway Bills';
+
+		array_push($new_array, $cols_array);
+
+		$cols_array2 = array();
 			
+		foreach($mapped_col_array as $field_id => $col_id){
+				
+			//get column info
+
+			$cols_array2[] = (!empty($up_file_col_array[$col_id]))?$up_file_col_array[$col_id]:null;
+
+		}//end foreach
+
+		array_push($new_array, $cols_array2);
+
+		foreach($data_array as $row){
+				
 			$new_array[] = $row;
 		}
-		
+
 		//var_dump($new_array);exit;
-		
+
 		$row_no = 1;
 
 		foreach($new_array as $row=>$cols){
