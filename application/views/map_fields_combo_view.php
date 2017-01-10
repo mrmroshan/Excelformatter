@@ -68,7 +68,8 @@ include("header.php")
 		      					style="width: 80%" 
 		      					name="<?php echo $element_name;?>" 
 		      					id="<?php echo str_replace(" ","_", $k1['FIELD_LABEL'])?>">
-							    <option value="">Please select an excel column name</option>
+							    
+							    
 							    <?php 					    
 							   /*
 							    $i = 0;
@@ -91,18 +92,23 @@ include("header.php")
 							    
 							    foreach($up_file_col_list as $col_list){					    	
 							    		
-							    	if( $mapped_form_elements[$element_name] == $i && 
-							    			!empty($mapped_form_elements[$element_name]) ||
-							    			$mapped_form_elements[$element_name] === 0 ) {
-							    		
+							    	if( $mapped_form_elements[$element_name] == $i ) {
+							    									    		
 							    		echo '<option value="'.$i.'" selected="selected">'.$col_list.'</option>';
 							    		
-							    	}else{
+							    	}else if ($mapped_form_elements[$element_name] != '' ) {
 							    		
 							    		echo '<option value="'.$i.'"  >'.$col_list.'</option>';
 							    		
-							    	}
+							    	}else{
 							    		
+							    		echo '<option value="" selected="selected">Please select an excel column name</option>';
+							    		
+							    		echo '<option value="'.$i.'"  >'.$col_list.'</option>';
+							    		
+							    		
+							    	}
+							    	
 							    	$i++;
 							    }
 							    
