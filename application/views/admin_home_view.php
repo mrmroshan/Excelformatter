@@ -61,8 +61,7 @@ body.loading .modal {
     </div>
     <div class="panel-body">
     <?php 
-    //echo '<pre>';var_dump($results);
-    
+       
     ?>
     <h3></h3>
             
