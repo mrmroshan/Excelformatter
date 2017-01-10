@@ -364,4 +364,5 @@ define('VIEWPATH', $view_folder.DIRECTORY_SEPARATOR);
  *
  * And away we go...
  */
+//updating
 require_once BASEPATH.'core/CodeIgniter.php';
